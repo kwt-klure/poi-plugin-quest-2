@@ -5,20 +5,36 @@ import { getPoiStore } from './poi/store'
 import { getStorage } from './store'
 
 const LEGACY_QUEST_PLUGIN_ID = 'poi-plugin-quest-info'
+const QUEST_REDUCER_PATCH_OWNER_IDS = new Set([
+  'poi-plugin-quest-info-2',
+  PACKAGE_NAME,
+])
 const HACK_KEY = `__patched-from-${PACKAGE_NAME}`
 
-/**
- * @env poi
- */
-const isLegacyQuestPluginEnabled = async () => {
+export const hasEnabledConflictingQuestPlugin = (
+  plugins: Array<{ id: string; enabled: boolean }> = [],
+  currentPackageName = PACKAGE_NAME,
+) =>
+  plugins.some(
+    (plugin) =>
+      plugin.enabled &&
+      plugin.id !== currentPackageName &&
+      QUEST_REDUCER_PATCH_OWNER_IDS.has(plugin.id),
+  )
+
+const shouldSkipLegacyQuestPluginPatch = async () => {
   const poiStore = await getPoiStore()
-  const legacyQuestPlugin = poiStore
-    .getState()
-    .plugins?.find((i) => i.id === LEGACY_QUEST_PLUGIN_ID)
-  if (legacyQuestPlugin && legacyQuestPlugin.enabled) {
+  const plugins = poiStore.getState().plugins ?? []
+
+  if (
+    plugins.some(
+      (plugin) => plugin.id === LEGACY_QUEST_PLUGIN_ID && plugin.enabled,
+    )
+  ) {
     return true
   }
-  return false
+
+  return hasEnabledConflictingQuestPlugin(plugins, PACKAGE_NAME)
 }
 
 const getQuestState = (maybeLanguage: string) => {
@@ -55,8 +71,8 @@ const getQuestState = (maybeLanguage: string) => {
  * @env poi
  */
 export const patchLegacyQuestPluginReducer = async () => {
-  if (await isLegacyQuestPluginEnabled()) {
-    // skip patch if legacy quest plugin enabled
+  if (await shouldSkipLegacyQuestPluginPatch()) {
+    // skip patch if legacy quest plugin or another quest-info variant is enabled
     return
   }
 
@@ -104,8 +120,8 @@ export const patchLegacyQuestPluginReducer = async () => {
  * @env poi
  */
 export const clearPatchLegacyQuestPluginReducer = async () => {
-  if (await isLegacyQuestPluginEnabled()) {
-    // skip clear if legacy quest plugin enabled
+  if (await shouldSkipLegacyQuestPluginPatch()) {
+    // skip clear if legacy quest plugin or another quest-info variant is enabled
     return
   }
   try {
