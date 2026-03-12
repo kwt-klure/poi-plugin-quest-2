@@ -1,21 +1,44 @@
 {
-  "name": "poi-plugin-quest-info-2",
-  "version": "0.15.6",
+  "name": "poi-plugin-kc-quest-audit",
+  "version": "0.16.1",
   "private": false,
-  "description": "show quest info",
-  "homepage": "https://github.com/lawvs/poi-plugin-quest-2/",
-  "bugs": {
-    "url": "https://github.com/lawvs/poi-plugin-quest-2/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lawvs/poi-plugin-quest-2.git"
-  },
+  "description": "Poi plugin for KanColle quest auditing with inventory-based requirement comparison",
   "license": "MIT",
   "author": {
     "name": "白水",
     "links": "https://github.com/lawvs"
   },
+  "keywords": [
+    "poi",
+    "plugin",
+    "kancolle",
+    "quest",
+    "inventory"
+  ],
+  "files": [
+    "src/App.tsx",
+    "src/analysis.ts",
+    "src/components",
+    "src/export.ts",
+    "src/filter-sphere",
+    "src/index.ts",
+    "src/importedInventory",
+    "src/patch.ts",
+    "src/poi",
+    "src/questHelper.ts",
+    "src/reducer.ts",
+    "src/requirements",
+    "src/Settings.tsx",
+    "src/store",
+    "src/tags.tsx",
+    "src/Toolbar.tsx",
+    "src/utils.ts",
+    "build",
+    "i18n",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "main": "src/index.ts",
   "scripts": {
     "dev": "npm run storybook",
@@ -96,12 +119,15 @@
     "vite": "^7.3.1"
   },
   "poiPlugin": {
-    "title": "Quest Information",
-    "description": "Show task information & enhance task panel",
+    "title": "KC Quest Audit",
+    "description": "Show task information, enhance task panel, and compare quest requirements against current inventory",
     "icon": "fa/indent",
     "i18nDir": "./i18n",
     "priority": 2,
     "apiVer": {}
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "packageManager": "npm@11.6.0"
 }
