@@ -1,10 +1,24 @@
-# poi-plugin-quest-info-2
+# poi-plugin-kc-quest-audit
 
-## 0.15.6
+## Unreleased
+
+### Documentation
+
+- Clarify in README and internal docs that quest requirement analysis is still partial and should be treated as an inventory audit aid, not a full completion guarantee.
+
+## 0.16.1
 
 ### Patch Changes
 
-- [#289](https://github.com/lawvs/poi-plugin-quest-2/pull/289) [`ca3d2b4`](https://github.com/lawvs/poi-plugin-quest-2/commit/ca3d2b46e34af38ba1e011fab10ee4f476271537) Thanks [@github-actions](https://github.com/apps/github-actions)! - Update quest data
+- Add a `Requirement Ready` toolbar filter so quests already satisfiable by the current imported inventory can be listed directly.
+
+## 0.16.0
+
+### Minor Changes
+
+- Fork the original quest plugin into an independently publishable package name for Poi GUI installation.
+- Add inventory-based quest requirement analysis for modeled quests, including ship groups and minimum remodel rank support.
+- Export quest analysis as a JSON file instead of relying on the previous broken clipboard flow.
 
 ## 0.15.5
 
