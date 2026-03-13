@@ -93,7 +93,7 @@ Root cause analysis:
 
 - not primarily an install-source problem
 - high probability of runtime conflict between two quest plugins of the same family
-- both variants patch the same legacy reducer path in [`src/patch.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/patch.ts)
+- both variants patch the same legacy reducer path in [`src/patch.ts`](../src/patch.ts)
 - both are conceptually trying to own the same quest-panel integration surface
 
 Additional contributing bug found:
@@ -135,6 +135,17 @@ The current safe direction is:
 
 This preserves maintainability of quest data updates while reducing runtime risk inside Poi.
 
+## 4.1 Keep the original quest architecture
+
+Treat the original quest plugin structure as the default architecture, even in this fork.
+
+- Keep upstream quest download scripts and generation scripts as the main data flow.
+- Keep quest translations sourced from the existing upstream quest datasets whenever possible.
+- Use `src/questOverrides/data.ts` only as a temporary bridge when live maintenance adds quests faster than upstream data sources update.
+- Do not turn the local overlay into a permanent second quest database or translation system.
+
+For the operational update flow, see [`docs/rapid-quest-update.md`](rapid-quest-update.md).
+
 ## 5. Current implementation direction
 
 Inventory analysis now uses:
@@ -145,17 +156,17 @@ Inventory analysis now uses:
 
 Relevant modules:
 
-- [`src/importedInventory/csv.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/importedInventory/csv.ts)
+- [`src/importedInventory/csv.ts`](../src/importedInventory/csv.ts)
   - parses the known CSV family
-- [`src/importedInventory/types.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/importedInventory/types.ts)
+- [`src/importedInventory/types.ts`](../src/importedInventory/types.ts)
   - imported inventory state types
-- [`src/store/importedInventory.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/store/importedInventory.ts)
+- [`src/store/importedInventory.ts`](../src/store/importedInventory.ts)
   - storage-facing hooks/actions
-- [`src/store/store.tsx`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/store/store.tsx)
+- [`src/store/store.tsx`](../src/store/store.tsx)
   - persists imported inventory in plugin local storage
-- [`src/Settings.tsx`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/Settings.tsx)
+- [`src/Settings.tsx`](../src/Settings.tsx)
   - upload and clear UI
-- [`src/store/analysis.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/store/analysis.ts)
+- [`src/store/analysis.ts`](../src/store/analysis.ts)
   - analysis now consumes imported inventory instead of Poi live inventory
 
 Current analysis behavior:
@@ -253,7 +264,7 @@ Observed issue:
 
 Mitigation already applied:
 
-- inventory dependency comparison was tightened in [`src/poi/inventory.ts`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/src/poi/inventory.ts)
+- inventory dependency comparison was tightened in [`src/poi/inventory.ts`](../src/poi/inventory.ts)
 
 But current preferred path is still:
 
@@ -288,12 +299,12 @@ Recommended test path:
 Practical commands:
 
 ```bash
-cd "/Users/yen-hsuantseng/Documents/Poi Browser Extension"
+cd "/path/to/poi-plugin-kc-quest-audit"
 npm run build
 npm pack --cache ./.npm-cache
 
 cd "$HOME/Library/Application Support/poi/plugins"
-npm install "/Users/yen-hsuantseng/Documents/Poi Browser Extension/poi-plugin-kc-quest-audit-0.16.0.tgz"
+npm install "/path/to/poi-plugin-kc-quest-audit-0.16.0.tgz"
 ```
 
 Preferred uninstall:

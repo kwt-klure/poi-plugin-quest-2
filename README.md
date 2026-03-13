@@ -25,6 +25,17 @@ Paste `poi-plugin-kc-quest-audit` in Poi's `Install from npm server` field and c
 - Compare modeled quest requirements against current owned ships and equipments.
 - Show `ready`, `missing ships`, `missing equipments`, and `not modeled` summaries on quest cards.
 
+## Architecture Principles
+
+This fork intentionally stays close to the original `poi-plugin-quest-2` structure.
+
+- Quest browsing, translations, search, filters, pre/post chains, and the main quest data flow still follow the original plugin architecture.
+- Generated quest data still comes from the existing upstream data sources and `build/*` pipeline.
+- Local quest overrides are only a temporary bridge for newly added quests when upstream sources lag behind live maintenance.
+- The overlay is not intended to replace the original translation pipeline.
+
+For the maintenance workflow used when the game adds new quests, see [`docs/rapid-quest-update.md`](docs/rapid-quest-update.md).
+
 ## Current Limits
 
 The inventory audit is helpful, but it is not a full authoritative quest solver yet.
@@ -36,7 +47,7 @@ The inventory audit is helpful, but it is not a full authoritative quest solver 
 - `Inferred` means the plugin parsed direct conditions from quest text conservatively. These results are useful, but less trustworthy than curated rules.
 - `No definitive data` means the quest data exists, but the plugin does not yet have enough structured requirement data to judge it safely.
 
-For a more detailed limitations note, see [`docs/quest-audit-limitations.md`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/docs/quest-audit-limitations.md).
+For a more detailed limitations note, see [`docs/quest-audit-limitations.md`](docs/quest-audit-limitations.md).
 
 ## Publish
 

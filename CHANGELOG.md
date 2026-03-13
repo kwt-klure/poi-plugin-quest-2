@@ -5,6 +5,7 @@
 ### Documentation
 
 - Clarify in README and internal docs that quest requirement analysis is still partial and should be treated as an inventory audit aid, not a full completion guarantee.
+- Add maintenance update docs describing how to preserve the original quest architecture while using temporary local overlay data for newly added quests.
 
 ## 0.16.1
 
