@@ -2,6 +2,8 @@
 
 This document is a handoff note for another agent or engineer. It summarizes how Poi plugins are structured, how installation actually works in practice, what was tried, what failed, and what should be treated as the current safe path.
 
+For commit/publish boundaries between local files, the personal GitHub fork, and any upstream/public contribution, see [`docs/repo-boundary-policy.md`](repo-boundary-policy.md).
+
 ## 1. Poi plugin shape
 
 Poi plugins in this repo follow the standard exported-module pattern:
