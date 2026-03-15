@@ -141,7 +141,9 @@ export const QuestCard = forwardRef<
                   {getQuestAnalysisSecondarySummary(analysis, t)}
                 </Tag>
               ) : null}
-              {analysis.origin === 'inferred' ? (
+              {analysis.origin === 'inferred' &&
+              analysis.status !== 'already_done' &&
+              analysis.status !== 'blocked' ? (
                 <Tag intent="warning" minimal={true}>
                   {t('Requirement Inferred')}
                 </Tag>

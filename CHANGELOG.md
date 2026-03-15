@@ -9,6 +9,7 @@
 
 ### Patch Changes
 
+- Restore quest-chain inferred completion/locked heuristics as first-class main-UI states so completed and blocked quests stop degrading into overly conservative unknown/plausible states. The layered export fields remain unchanged for downstream consumers.
 - Add a runtime quest overlay layer so newly discovered quests can be patched in locally without editing the generated `build/*` data pipeline.
 - Include raw in-game quest API snapshots in exported analysis JSON so new quest `api_no` values can be collected before upstream data sources update.
 - Accumulate observed questlist responses across viewed tabs so exported in-game quest snapshots are no longer limited to the most recently opened quest tab.

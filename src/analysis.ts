@@ -414,7 +414,7 @@ const resolvePlanningStatus = ({
     return 'already_done'
   }
   if (completionState === 'completed_inferred') {
-    return 'probably_done'
+    return 'already_done'
   }
   if (acceptability === 'locked') {
     return 'blocked'

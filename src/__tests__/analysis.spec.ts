@@ -976,7 +976,7 @@ describe('analyzeQuestRequirement', () => {
     })
   })
 
-  test('maps inferred-completed quests to probably_done even when structurally satisfiable', () => {
+  test('maps inferred-completed quests to already_done even when structurally satisfiable', () => {
     const requirement: QuestRequirement = {
       ships: [{ label: '明石', names: ['明石'], count: 1 }],
     }
@@ -989,11 +989,29 @@ describe('analyzeQuestRequirement', () => {
         QUEST_STATUS.ALREADY_COMPLETED,
       ),
     ).toMatchObject({
-      status: 'probably_done',
+      status: 'already_done',
       structuralFeasibility: 'ready',
       completionState: 'completed_inferred',
       acceptability: 'available',
     })
+  })
+
+  test('keeps inferred-completed quests out of the actionable filter', () => {
+    expect(
+      isQuestActionable({
+        gameId: 235,
+        status: 'already_done',
+        structuralFeasibility: 'ready',
+        acceptability: 'available',
+        completionState: 'completed_inferred',
+        origin: 'curated',
+        missingShips: [],
+        missingEquipments: [],
+        missingInventoryParts: [],
+        notes: [],
+        requirement: null,
+      }),
+    ).toBe(false)
   })
 
   test('maps locked quests to blocked even when structurally satisfiable', () => {
