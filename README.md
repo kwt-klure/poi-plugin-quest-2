@@ -1,87 +1,127 @@
 # poi-plugin-kc-quest-audit
 
-`poi-plugin-kc-quest-audit` is a [poi](https://github.com/poooi/poi) plugin fork based on [lawvs/poi-plugin-quest-2](https://github.com/lawvs/poi-plugin-quest-2). It keeps the original quest browsing experience and adds inventory-based requirement comparison for KanColle quests.
+`poi-plugin-kc-quest-audit` is a [Poi](https://github.com/poooi/poi) plugin fork of [lawvs/poi-plugin-quest-2](https://github.com/lawvs/poi-plugin-quest-2).
 
-Data is maintained by [kcanotify-gamedata](https://github.com/antest1/kcanotify-gamedata), [kc3-translations](https://github.com/KC3Kai/kc3-translations), and [kcQuests](https://github.com/kcwikizh/kcQuests).
+This fork keeps the original quest browsing experience and upstream data pipeline, but adds a practical inventory-based audit layer for KanColle quests.
 
-<img width="700" alt="demo" src="https://user-images.githubusercontent.com/18554747/196052461-97d36ffe-8be4-4618-80ed-459e97085454.png">
+## What This Fork Is
+
+This project is not a rewrite of `poi-plugin-quest-2`.
+
+It is a fork that deliberately keeps:
+
+- the original quest browser
+- the existing translation and generated data pipeline
+- the upstream `build/*` quest data model
+- the original search, tags, and pre/post quest structure
+
+On top of that, it adds local audit and maintenance tooling that the original plugin does not provide.
+
+## What This Fork Adds
+
+- Inventory-based quest requirement analysis against imported ship/equipment CSV data
+- Quest card summaries such as `Ready`, `Missing ships`, `Missing equipments`, and `No definitive data`
+- Conservative parser-based fallback when no curated requirement rule exists
+- Curated alternative requirement branches for quests with A/B composition paths
+- Export of quest analysis as JSON
+- Observed in-game quest snapshot export for maintenance-time quest discovery
+- Temporary local quest overlay support without editing generated upstream data
+- A maintenance draft workflow for newly added quests before `api_no / gameId` is confirmed
 
 ## Installation
 
-This package is meant to be installed through Poi's plugin GUI after it has been published to npm.
+If this package has been published to npm, install it from Poi's plugin GUI.
 
-Paste `poi-plugin-kc-quest-audit` in Poi's `Install from npm server` field and click the install button.
+1. Open Poi.
+2. Go to the plugin manager.
+3. Paste `poi-plugin-kc-quest-audit` into `Install from npm server`.
+4. Install and reload Poi.
 
-![image](https://user-images.githubusercontent.com/18554747/161830757-0a4e500c-f246-4dbd-820d-0b9a9c5a34a4.png)
+![Poi install field](https://user-images.githubusercontent.com/18554747/161830757-0a4e500c-f246-4dbd-820d-0b9a9c5a34a4.png)
 
-## Features
+## Data Sources
 
-- Translated quest info (English/Simplified Chinese/Traditional Chinese/Korean).
-- Task panel translation.
-- Quest search and filter.
-- Sync with game quest data.
-- Auto switch to quest tab when enter quest views.
-- Export quest analysis to a JSON file.
-- Compare modeled quest requirements against current owned ships and equipments.
-- Support curated alternative requirement branches when a quest can be satisfied through A/B composition paths.
-- Show `ready`, `missing ships`, `missing equipments`, and `not modeled` summaries on quest cards.
+This fork still relies on the same public quest data ecosystem as the upstream plugin:
+
+- [kcanotify-gamedata](https://github.com/antest1/kcanotify-gamedata)
+- [kc3-translations](https://github.com/KC3Kai/kc3-translations)
+- [kcQuests](https://github.com/kcwikizh/kcQuests)
+
+The goal is to stay compatible with that pipeline, not replace it with an unrelated local system.
+
+## Requirement Analysis Model
+
+The audit layer is intentionally conservative.
+
+- Curated rules are preferred over parser inference.
+- `Inferred` only means the plugin derived conditions directly from quest text.
+- Wiki/manual rules that have already been turned into explicit requirement data are treated as curated, not inferred.
+- Curated rules can now express alternative branches such as:
+  - `Langley` flagship
+  - or `CVL >= 2`
+
+When a quest has explicit alternatives:
+
+- satisfying any branch is enough for `Ready`
+- the UI can show which alternative branch matched
+- if none match, the UI shows the closest branch instead of dumping every possible path at once
 
 ## Architecture Principles
 
 This fork intentionally stays close to the original `poi-plugin-quest-2` structure.
 
-- Quest browsing, translations, search, filters, pre/post chains, and the main quest data flow still follow the original plugin architecture.
-- Generated quest data still comes from the existing upstream data sources and `build/*` pipeline.
-- Local quest overrides are only a temporary bridge for newly added quests when upstream sources lag behind live maintenance.
-- The overlay is not intended to replace the original translation pipeline.
-- Before `api_no` / `gameId` is confirmed, new maintenance-era quest research now lives in both:
-  - `docs/maintenance-2026-03-13-draft.md`
-  - `docs/data/maintenance-2026-03-13-public.json`
-  This public draft layer is for staging only and is not imported by runtime code.
+- Generated quest data still comes from the existing upstream pipeline and `build/*`.
+- Runtime quest overrides are only a temporary bridge when upstream data lags behind live maintenance.
+- The overlay is not meant to become a second permanent translation or quest database.
+- New maintenance-era quests should not enter runtime overlay until `api_no / gameId` is confirmed.
 
-For the maintenance workflow used when the game adds new quests, see [`docs/rapid-quest-update.md`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/docs/rapid-quest-update.md).
+## Maintenance Workflow
+
+When the game adds new quests and upstream sources are behind, this fork now uses a dual-track public draft:
+
+- human-readable notes in [`docs/maintenance-2026-03-13-draft.md`](docs/maintenance-2026-03-13-draft.md)
+- machine-readable staging data in [`docs/data/maintenance-2026-03-13-public.json`](docs/data/maintenance-2026-03-13-public.json)
+
+That draft layer is for research and later promotion only. It is not imported by runtime code.
+
+Once `api_no / gameId` is confirmed from Poi:
+
+- move only the confirmed data into `src/questOverrides/data.ts`
+- keep the rest in docs until it is safe to promote
+
+For the full workflow, see [`docs/rapid-quest-update.md`](docs/rapid-quest-update.md).
 
 ## Current Limits
 
-The inventory audit is helpful, but it is not a full authoritative quest solver yet.
+This plugin is an audit aid, not a full authoritative quest solver.
 
-- It only judges inventory-related conditions that are either manually modeled or safely inferred from quest text.
-- Curated requirement rules can now express alternative branches, so quests with explicit A/B composition paths no longer need to be flattened into one matcher.
-- It does not fully understand every quest, every fleet alias, every historical composition name, or every special exception.
-- Dynamic progress conditions such as sortie counts, map clears, victory ranks, and many battle-side conditions are not fully audited.
+- It mainly judges inventory and composition-side conditions.
+- Dynamic progress conditions such as sortie counts, map clears, victory ranks, and many battle-side conditions are still not fully audited.
 - `Ready` means the currently imported inventory appears to satisfy the modeled inventory conditions. It does not guarantee the quest is fully completable in-game.
-- `Inferred` means the plugin parsed direct conditions from quest text conservatively. Wiki/manual rules that have already been turned into explicit curated data are not labeled `Inferred`.
-- `No definitive data` means the quest data exists, but the plugin does not yet have enough structured requirement data to judge it safely.
+- `No definitive data` means quest data exists, but the plugin does not yet have enough structured requirement data to judge it safely.
 
-For a more detailed limitations note, see [`docs/quest-audit-limitations.md`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/docs/quest-audit-limitations.md).
+For more detail, see [`docs/quest-audit-limitations.md`](docs/quest-audit-limitations.md).
 
 ## Publish
 
-Versioning rule for this project:
+Versioning rule for this fork:
 
-- Any functional change, UI change, behavior change, data-model change, or packaging change must bump `package.json` version before packing/installing the plugin into Poi, even if the change is small.
-- This includes local tarball installs used for manual testing in Poi.
-- Pure documentation-only edits may skip the version bump if no packaged runtime files change.
+- Any functional change, UI change, behavior change, data-model change, or packaging change must bump `package.json`.
+- This includes local tarball installs used for Poi testing.
+- Pure docs-only changes may skip the version bump.
 
-1. Run `npm install`
-2. Run `npm run build`
-3. Run tests with `npx jest src/__tests__/analysis.spec.ts src/__tests__/inventory.spec.ts src/__tests__/export.spec.ts --runInBand`
-4. Log in with `npm login`
-5. Publish with `npm publish --access public`
+Release flow:
 
-If you want the settings page to show project links, add `homepage` and `bugs.url` to `package.json` before publishing.
+1. `npm install`
+2. `npm run build`
+3. `npm test -- --runInBand`
+4. `npm publish --access public`
 
 ## Development
 
 ```sh
-# Install dependencies
 npm install
-
-# Download game data from github and convert assets to base64
-# try set `http_proxy` or `https_proxy` as environment when download fail
 npm run build
-
-# Run the plugin in web environment
 npm run storybook
 ```
 
