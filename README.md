@@ -4,6 +4,15 @@
 
 This fork keeps the original quest browsing experience and upstream data pipeline, but adds a practical inventory-based audit layer for KanColle quests.
 
+If the original plugin is a quest browser, this fork is a quest browser **plus** a conservative inventory checker and maintenance-time quest staging workflow.
+
+In practice, it helps answer questions like:
+
+- "Do I already have the ships for this quest?"
+- "Which branch of this A/B composition requirement do I satisfy?"
+- "What is still missing from my current imported inventory?"
+- "How do I stage newly added quests locally before upstream data sources catch up?"
+
 ## What This Fork Is
 
 This project is not a rewrite of `poi-plugin-quest-2`.
@@ -30,7 +39,11 @@ On top of that, it adds local audit and maintenance tooling that the original pl
 
 ## Installation
 
-If this package has been published to npm, install it from Poi's plugin GUI.
+There are two practical installation paths.
+
+### Option 1: Install from Poi's plugin GUI
+
+If this package has been published to npm, install it directly from Poi:
 
 1. Open Poi.
 2. Go to the plugin manager.
@@ -38,6 +51,34 @@ If this package has been published to npm, install it from Poi's plugin GUI.
 4. Install and reload Poi.
 
 ![Poi install field](https://user-images.githubusercontent.com/18554747/161830757-0a4e500c-f246-4dbd-820d-0b9a9c5a34a4.png)
+
+### Option 2: Build from source and install the tarball locally
+
+This is the safer path if you want to test the fork before it is published.
+
+1. Clone this repository.
+2. Install dependencies:
+
+   ```sh
+   npm install
+   ```
+
+3. Build a package tarball:
+
+   ```sh
+   npm pack
+   ```
+
+4. Install the generated `poi-plugin-kc-quest-audit-<version>.tgz` into Poi's plugin environment:
+
+   ```sh
+   cd ~/Library/Application\ Support/poi/plugins
+   npm install --no-save /path/to/poi-plugin-kc-quest-audit-<version>.tgz
+   ```
+
+5. Reload Poi or restart the app.
+
+If you are upgrading an existing local install, running the same `npm install --no-save` command with the new tarball is enough.
 
 ## Data Sources
 
