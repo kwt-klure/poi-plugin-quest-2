@@ -23,6 +23,7 @@ Paste `poi-plugin-kc-quest-audit` in Poi's `Install from npm server` field and c
 - Auto switch to quest tab when enter quest views.
 - Export quest analysis to a JSON file.
 - Compare modeled quest requirements against current owned ships and equipments.
+- Support curated alternative requirement branches when a quest can be satisfied through A/B composition paths.
 - Show `ready`, `missing ships`, `missing equipments`, and `not modeled` summaries on quest cards.
 
 ## Architecture Principles
@@ -33,21 +34,26 @@ This fork intentionally stays close to the original `poi-plugin-quest-2` structu
 - Generated quest data still comes from the existing upstream data sources and `build/*` pipeline.
 - Local quest overrides are only a temporary bridge for newly added quests when upstream sources lag behind live maintenance.
 - The overlay is not intended to replace the original translation pipeline.
+- Before `api_no` / `gameId` is confirmed, new maintenance-era quest research now lives in both:
+  - `docs/maintenance-2026-03-13-draft.md`
+  - `docs/data/maintenance-2026-03-13-public.json`
+  This public draft layer is for staging only and is not imported by runtime code.
 
-For the maintenance workflow used when the game adds new quests, see [`docs/rapid-quest-update.md`](docs/rapid-quest-update.md).
+For the maintenance workflow used when the game adds new quests, see [`docs/rapid-quest-update.md`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/docs/rapid-quest-update.md).
 
 ## Current Limits
 
 The inventory audit is helpful, but it is not a full authoritative quest solver yet.
 
 - It only judges inventory-related conditions that are either manually modeled or safely inferred from quest text.
+- Curated requirement rules can now express alternative branches, so quests with explicit A/B composition paths no longer need to be flattened into one matcher.
 - It does not fully understand every quest, every fleet alias, every historical composition name, or every special exception.
 - Dynamic progress conditions such as sortie counts, map clears, victory ranks, and many battle-side conditions are not fully audited.
 - `Ready` means the currently imported inventory appears to satisfy the modeled inventory conditions. It does not guarantee the quest is fully completable in-game.
-- `Inferred` means the plugin parsed direct conditions from quest text conservatively. These results are useful, but less trustworthy than curated rules.
+- `Inferred` means the plugin parsed direct conditions from quest text conservatively. Wiki/manual rules that have already been turned into explicit curated data are not labeled `Inferred`.
 - `No definitive data` means the quest data exists, but the plugin does not yet have enough structured requirement data to judge it safely.
 
-For a more detailed limitations note, see [`docs/quest-audit-limitations.md`](docs/quest-audit-limitations.md).
+For a more detailed limitations note, see [`docs/quest-audit-limitations.md`](/Users/yen-hsuantseng/Documents/Poi%20Browser%20Extension/docs/quest-audit-limitations.md).
 
 ## Publish
 
