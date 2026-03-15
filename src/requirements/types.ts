@@ -41,7 +41,7 @@ export interface ForbiddenRequirement {
   equipmentType2?: number[]
 }
 
-export interface QuestRequirement {
+export interface QuestRequirementBase {
   ships?: ShipRequirement[]
   shipTypes?: ShipTypeRequirement[]
   shipClasses?: ShipClassRequirement[]
@@ -49,4 +49,12 @@ export interface QuestRequirement {
   equipments?: EquipmentRequirement[]
   forbidden?: ForbiddenRequirement[]
   notes?: string[]
+}
+
+export interface QuestRequirementBranch extends QuestRequirementBase {
+  label: string
+}
+
+export interface QuestRequirement extends QuestRequirementBase {
+  anyOf?: QuestRequirementBranch[]
 }

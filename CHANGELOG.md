@@ -2,10 +2,19 @@
 
 ## Unreleased
 
+### Patch Changes
+
+- Add a runtime quest overlay layer so newly discovered quests can be patched in locally without editing the generated `build/*` data pipeline.
+- Include raw in-game quest API snapshots in exported analysis JSON so new quest `api_no` values can be collected before upstream data sources update.
+- Accumulate observed questlist responses across viewed tabs so exported in-game quest snapshots are no longer limited to the most recently opened quest tab.
+- Add full `anyOf` requirement branches so curated quest rules can model A/B composition paths instead of forcing everything into one matcher.
+- Show the matched alternative branch, or the closest unmet branch, in quest analysis notes when a curated requirement has explicit alternatives.
+
 ### Documentation
 
 - Clarify in README and internal docs that quest requirement analysis is still partial and should be treated as an inventory audit aid, not a full completion guarantee.
-- Add maintenance update docs describing how to preserve the original quest architecture while using temporary local overlay data for newly added quests.
+- Document the rapid new-quest update workflow and explicitly record that the fork should preserve the original quest data and translation architecture.
+- Add a non-runtime public maintenance JSON draft so newly discovered quests can be staged in both markdown and machine-readable form before `api_no` / `gameId` is confirmed.
 
 ## 0.16.1
 

@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-kc-quest-audit",
-  "version": "0.16.1",
+  "version": "0.16.5",
   "private": false,
   "description": "Poi plugin for KanColle quest auditing with inventory-based requirement comparison",
   "license": "MIT",
@@ -26,6 +26,7 @@
     "src/patch.ts",
     "src/poi",
     "src/questHelper.ts",
+    "src/questOverrides",
     "src/reducer.ts",
     "src/requirements",
     "src/Settings.tsx",

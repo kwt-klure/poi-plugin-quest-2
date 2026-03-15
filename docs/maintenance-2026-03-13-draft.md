@@ -1,142 +1,103 @@
 # 2026-03-13 Maintenance Quest Draft
 
-This document is a working draft for the quests added around the 2026-03-13 maintenance window.
+This document tracks the quests added around the 2026-03-13 maintenance window.
 
-It exists to help us prepare a local overlay **without** replacing the original `poi-plugin-quest-2` quest data pipeline.
+It now works as the human-readable half of a **dual-track draft layer**:
+
+- this markdown file for narrative context and source notes
+- `docs/data/maintenance-2026-03-13-public.json` for machine-readable public data
 
 Important:
 
-- This file is **not** runtime data.
-- Do **not** copy entries from here into `src/questOverrides/data.ts` until `api_no` / `gameId` is confirmed.
-- Translation and long-term quest text should still come from the original upstream quest sources once they catch up.
+- Neither file is runtime data.
+- Do **not** copy entries into `src/questOverrides/data.ts` until `api_no` / `gameId` is confirmed.
+- Long-term quest text and translations should still come from the original upstream pipeline once it catches up.
 
-## Source status on 2026-03-14
+## Source status on 2026-03-16
 
-As of 2026-03-14:
+As of 2026-03-16:
 
-- `kcQuests` is still behind this maintenance update.
-- `kcanotify-gamedata` is still behind this maintenance update.
-- the Chinese latest-quest page is not fully updated for this wave yet.
-- Japanese wiki sources are partially updated and are currently the best public reference.
+- `kcQuests` is still behind this maintenance wave.
+- `kcanotify-gamedata` is still behind this maintenance wave.
+- the Chinese latest-quest page is now updated enough to support a public draft
+- public sources still do **not** provide a safe, confirmed `api_no` / `gameId` list
 
 More specifically:
 
-- the `kcQuests` main branch is still at the 2026-03-08 refresh point
-- `quests-scn-new.json` does contain some newer high-id quests, but not the specific names we are tracking for this 2026-03-13 maintenance wave
-- this means we should not assume that "new quest data exists in kcQuests" automatically means "this wave is already covered"
+- the `kcQuests` public JSON still does not include the exact quest names from this 2026-03-13 wave
+- the Chinese latest-quest page now exposes quest codes, names, conditions, rewards, and some notes/prerequisites for several of the new entries
+- the Japanese quest front page remains useful as a cross-check, especially for entries that are still incomplete on the Chinese side
 
-## Public source summary
+## Public draft artifacts
 
-### Maintenance notice
+For this maintenance wave we keep both:
 
-The Japanese maintenance notice confirms that at least one White Day limited-time quest was added:
+- `docs/maintenance-2026-03-13-draft.md`
+- `docs/data/maintenance-2026-03-13-public.json`
 
-- `〖White Day〗特別任務x1の期間限定実装`
-- described there as a `軽空母` White Day sortie quest
+The JSON draft is keyed by quest code and exists only to make later promotion easier once internal ids are known.
 
-Reference:
+Current quests tracked there:
 
-- [wikiwiki maintenance notice](https://wikiwiki.jp/kancolle/%E6%83%85%E5%A0%B1%E5%80%89%E5%BA%AB/%E9%81%8B%E5%96%B6%E9%8E%AE%E5%AE%88%E5%BA%9C%E3%81%8B%E3%82%89%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B/2025)
+1. `2603B4` `【WD限定任務】軽空母、出撃！2026`
+2. `2603B5` `【期間限定任務】春の旗艦は……私だからっ！`
+3. `2603D1` `【期間限定:拡張任務】水雷戦隊遠征作戦！`
+4. `2603G2` `【期間限定:拡張任務】夕雲型改装任務！`
+5. `F142` `【工廠任務】水雷戦隊新改装艦、改装準備！`
+6. `B215` `三十二駆「玉波改二」、出撃いたします。`
 
-### Community-observed quest names
+## What the public sources are good for now
 
-The Japanese quest front page currently appears to contain player-observed names for several quests from this maintenance wave.
+Public sources are now good enough to draft:
 
-Reference:
+- quest code
+- Japanese and Chinese quest names
+- quest text
+- public reward text when already listed
+- known prerequisite notes when already listed
+- curated requirement drafts for obvious inventory / composition checks
 
-- [wikiwiki quest front page](https://wikiwiki.jp/kancolle/%E4%BB%BB%E5%8B%99/%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88%E3%83%9A%E3%83%BC%E3%82%B8)
+Public sources are **not** yet good enough to activate runtime overlay entries, because we still lack:
 
-At the time of writing, the following quest names are worth tracking:
+- confirmed `api_no`
+- confirmed `gameId`
+- confirmed overlay-safe quest map entries
 
-1. `〖WD限定任務〗軽空母、出撃！2026`
-   - confidence: medium
-   - source: maintenance notice + wiki/community references
-   - current status: likely real and likely limited-time
+## Current interpretation rule
 
-2. `〖期間限定任務〗春の旗艦は……私だからっ！`
-   - confidence: medium
-   - source: wiki/community reference
-   - current status: name observed, internal id not confirmed
+When a wiki page has already turned quest text into clear requirement notes, we treat that as a **curated draft source**, not as parser inference.
 
-3. `〖期間限定:拡張任務〗水雷戦隊遠征作戦！`
-   - confidence: medium
-   - source: wiki/community reference
-   - current status: name observed, internal id not confirmed
+Example:
 
-4. `〖期間限定:拡張任務〗夕雲型改装任務！`
-   - confidence: medium
-   - source: wiki/community reference
-   - current status: name observed, internal id not confirmed
+- `2603B4`
+  - `Langley` flagship
+  - **or** any flagship with `CVL >= 2`
 
-5. `〖工廠任務〗水雷戦隊新改装艦、改装準備！`
-   - confidence: medium
-   - source: wiki/community reference
-   - current status: name observed, internal id not confirmed
+That kind of A/B condition belongs in curated draft data and should not be marked as `推測` once it is manually formalized.
 
-6. `三十二駆「玉波改二」、出撃いたします。`
-   - confidence: medium
-   - source: wiki/community reference
-   - current status: name observed, internal id not confirmed
+At the same time, we still distinguish between:
 
-## What we checked and what it means
+- conditions the plugin can check now
+- conditions that remain documented as notes only
 
-### `kcQuests`
+For example, sortie map order, boss count, and S-rank progress can be written into notes without pretending they are already auto-checked.
 
-We checked the public `kcQuests` quest JSON directly.
+## What is still blocked
 
-Current conclusion:
+The blocker for runtime overlay remains unchanged:
 
-- it already contains some newer quests related to the `三十二駆` line
-- however, it still does **not** contain the specific quest names we are currently tracking from the 2026-03-13 wave
-- because of that, we should treat `kcQuests` as **not yet caught up for this specific update**
+- no confirmed `api_no` / `gameId`
 
-This is an important distinction:
+Without those ids, this draft layer is intentionally **not** promoted into:
 
-- "some newer quests exist" is not enough
-- "the exact quest names from this maintenance wave are present" is the real threshold
-
-### Chinese latest-quest page
-
-We also checked the Chinese latest-quest page.
-
-Current conclusion:
-
-- it does not yet expose a complete 2026-03-13 section for this wave
-- it is not currently sufficient as the sole source for overlay data
-
-### Japanese wiki pages
-
-The Japanese side is currently the most useful public reference, but still only partially ready.
-
-Current conclusion:
-
-- maintenance notes confirm at least one White Day limited-time quest
-- community-facing quest pages suggest multiple quests were added
-- but public pages still do not give us a clean, confirmed `api_no` / `gameId` list
-- therefore they are good for a tracking draft, but not yet good enough for direct overlay input
-
-## What is still missing
-
-For overlay use, we still need at least:
-
-- confirmed `api_no` / `gameId`
-- confirmed quest code
-- confirmed quest category or periodic type, if applicable
-- confirmed `pre` / `post` chain if we want to show it
-- confirmed reward text if we want to display it before upstream catches up
-
-In practice, the first missing item is the blocker:
-
-- without confirmed `api_no` / `gameId`, we cannot safely insert runtime overlay data while preserving the original quest architecture
-
-Right now this draft is **not** enough to safely populate `src/questOverrides/data.ts`.
+- `src/questOverrides/data.ts`
 
 ## Recommended next step
 
-Use Poi export to gather the internal ids:
+Use Poi export to gather internal ids:
 
 1. Reload `KC Quest Audit`
-2. Visit the tabs that may contain the new quests
+2. Visit the quest tabs that may contain the new quests
 3. Export quest analysis JSON
 4. Inspect:
    - `gameQuestSnapshot.observedQuestList`
@@ -148,9 +109,10 @@ Once a quest appears there with a confirmed `api_no`, move only the confirmed da
 
 ## Cleanup rule
 
-This draft is temporary working context.
+This draft layer is temporary working context.
 
 Once upstream quest sources catch up and the local overlay is no longer needed:
 
-- remove any temporary overlay entries
-- keep the original quest pipeline as the long-term source of truth
+- remove temporary overlay entries from `src/questOverrides/data.ts`
+- keep `docs/maintenance-2026-03-13-draft.md` only as maintenance notes if still useful
+- archive or delete `docs/data/maintenance-2026-03-13-public.json` if it no longer serves a maintenance handoff purpose

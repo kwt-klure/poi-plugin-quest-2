@@ -59,13 +59,17 @@ Use the normal pipeline.
 
 ### Case 2: upstream has not updated yet
 
-Use the overlay as a temporary bridge.
+Use a two-step draft path first, then promote to overlay only after ids are confirmed.
 
 1. Collect a reliable quest list from wiki / maintenance notes / community discovery.
-2. Confirm each quest's `api_no` / `gameId` from Poi.
-3. Add only confirmed data to `src/questOverrides/data.ts`.
-4. Re-run validation.
-5. Once upstream catches up, remove the temporary overlay entries.
+2. Update both:
+   - `docs/maintenance-2026-03-13-draft.md`
+   - `docs/data/maintenance-2026-03-13-public.json`
+3. If wiki pages already provide clear requirement notes, write them down as curated draft conditions there.
+4. Confirm each quest's `api_no` / `gameId` from Poi.
+5. Add only confirmed data to `src/questOverrides/data.ts`.
+6. Re-run validation.
+7. Once upstream catches up, remove the temporary overlay entries.
 
 ## How to collect `api_no` / `gameId`
 
@@ -85,6 +89,16 @@ Important:
 
 - `currentTabQuestList` only reflects the currently viewed quest response.
 - `observedQuestList` is the accumulated set of quests observed across viewed tabs and is the safer source for new quest discovery.
+
+## What to do before ids are known
+
+Before `api_no` / `gameId` is confirmed:
+
+- update the maintenance markdown draft for human-readable notes
+- update the JSON public draft for machine-readable staging
+- do **not** put partial public data into runtime overlay files
+
+The public JSON draft is for future promotion only. It is not a runtime source of truth.
 
 ## What to put in the overlay
 

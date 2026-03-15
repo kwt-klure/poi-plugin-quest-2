@@ -1,6 +1,12 @@
 import type { UnionQuest } from './questHelper'
 import { resolveQuestRequirement, SHIP_GROUPS } from './requirements'
-import type { PositionRequirement, QuestRequirement, ShipRequirement } from './requirements'
+import type {
+  PositionRequirement,
+  QuestRequirement,
+  QuestRequirementBase,
+  QuestRequirementBranch,
+  ShipRequirement,
+} from './requirements'
 import type { ImportedInventoryState } from './importedInventory/types'
 
 export type OwnedShip = {
@@ -63,6 +69,20 @@ type ShipMatcher = {
   match: (ship: OwnedShip) => boolean
 }
 
+type RequirementEvaluation = {
+  status: QuestAnalysisStatus
+  missingShips: string[]
+  missingEquipments: string[]
+  missingInventoryParts: Array<'ships' | 'equipments'>
+  notes: string[]
+}
+
+type EvaluatedAlternative = {
+  label: string
+  requirement: QuestRequirementBase
+  evaluation: RequirementEvaluation
+}
+
 export interface ShipMatcherDebug {
   label: string
   count: number
@@ -112,7 +132,7 @@ const matchPositionRequirement = (
   (positionRequirement.shipTypes?.includes(ship.shipType) ?? false) ||
   (positionRequirement.shipClasses?.includes(ship.shipClass) ?? false)
 
-const buildShipMatcher = (requirement: QuestRequirement): ShipMatcher[] => {
+const buildShipMatcher = (requirement: QuestRequirementBase): ShipMatcher[] => {
   const matchers: ShipMatcher[] = []
 
   requirement.positions?.flagship?.forEach((positionRequirement) => {
@@ -162,7 +182,7 @@ const buildShipMatcher = (requirement: QuestRequirement): ShipMatcher[] => {
 }
 
 const buildEquipmentDeficits = (
-  requirement: QuestRequirement,
+  requirement: QuestRequirementBase,
   inventory: InventorySnapshot,
 ): string[] =>
   (requirement.equipments ?? [])
@@ -182,7 +202,7 @@ const buildEquipmentDeficits = (
     .filter(Boolean) as string[]
 
 const buildEquipmentMatcherDebug = (
-  requirement: QuestRequirement,
+  requirement: QuestRequirementBase,
   inventory: InventorySnapshot,
 ): EquipmentMatcherDebug[] =>
   (requirement.equipments ?? []).map((equipmentRequirement) => {
@@ -211,7 +231,7 @@ const buildEquipmentMatcherDebug = (
   })
 
 const buildShipDeficits = (
-  requirement: QuestRequirement,
+  requirement: QuestRequirementBase,
   inventory: InventorySnapshot,
 ): string[] =>
   buildShipMatcher(requirement)
@@ -267,31 +287,67 @@ const canAssignShips = (matchers: ShipMatcher[], ships: OwnedShip[]): boolean =>
   return solve(0)
 }
 
-export const analyzeQuestRequirement = (
-  gameId: number,
-  requirement: QuestRequirement | null | undefined,
-  inventory: InventorySnapshot | ImportedInventoryState,
-  origin: QuestAnalysisOrigin = 'curated',
-): QuestAnalysis => {
-  if (!requirement) {
-    return {
-      gameId,
-      status: 'unsupported',
-      origin: 'none',
-      missingShips: [],
-      missingEquipments: [],
-      missingInventoryParts: [],
-      notes: [],
-      requirement: null,
+const countMissingEntries = (entries: string[]) =>
+  entries.reduce((total, entry) => {
+    const matched = entry.match(/x(\d+)$/)
+    if (!matched) {
+      return total + 1
     }
+    return total + Number(matched[1])
+  }, 0)
+
+const getBaseRequirement = (
+  requirement: QuestRequirement,
+): QuestRequirementBase => {
+  const { anyOf: _anyOf, ...baseRequirement } = requirement
+  return baseRequirement
+}
+
+const mergePositions = (
+  base?: QuestRequirementBase['positions'],
+  branch?: QuestRequirementBase['positions'],
+): QuestRequirementBase['positions'] => {
+  const flagship = [...(base?.flagship ?? []), ...(branch?.flagship ?? [])]
+  const second = [...(base?.second ?? []), ...(branch?.second ?? [])]
+
+  if (!flagship.length && !second.length) {
+    return undefined
   }
 
-  const requiresShips =
-    Boolean(requirement.ships?.length) ||
-    Boolean(requirement.shipTypes?.length) ||
-    Boolean(requirement.shipClasses?.length) ||
-    Boolean(requirement.positions?.flagship?.length) ||
-    Boolean(requirement.positions?.second?.length)
+  return {
+    ...(flagship.length > 0 ? { flagship } : {}),
+    ...(second.length > 0 ? { second } : {}),
+  }
+}
+
+const mergeRequirementBranch = (
+  baseRequirement: QuestRequirementBase,
+  branch: QuestRequirementBranch,
+): QuestRequirementBase => ({
+  ships: [...(baseRequirement.ships ?? []), ...(branch.ships ?? [])],
+  shipTypes: [...(baseRequirement.shipTypes ?? []), ...(branch.shipTypes ?? [])],
+  shipClasses: [
+    ...(baseRequirement.shipClasses ?? []),
+    ...(branch.shipClasses ?? []),
+  ],
+  positions: mergePositions(baseRequirement.positions, branch.positions),
+  equipments: [...(baseRequirement.equipments ?? []), ...(branch.equipments ?? [])],
+  forbidden: [...(baseRequirement.forbidden ?? []), ...(branch.forbidden ?? [])],
+  notes: [...(baseRequirement.notes ?? []), ...(branch.notes ?? [])],
+})
+
+const hasRequirementConditions = (requirement: QuestRequirementBase) =>
+  Boolean(requirement.ships?.length) ||
+  Boolean(requirement.shipTypes?.length) ||
+  Boolean(requirement.shipClasses?.length) ||
+  Boolean(requirement.positions?.flagship?.length) ||
+  Boolean(requirement.positions?.second?.length)
+
+const evaluateRequirement = (
+  requirement: QuestRequirementBase,
+  inventory: InventorySnapshot | ImportedInventoryState,
+): RequirementEvaluation => {
+  const requiresShips = hasRequirementConditions(requirement)
   const requiresEquipments = Boolean(requirement.equipments?.length)
   const missingInventoryParts: Array<'ships' | 'equipments'> = []
 
@@ -304,14 +360,11 @@ export const analyzeQuestRequirement = (
 
   if (missingInventoryParts.length > 0) {
     return {
-      gameId,
       status: 'missing_inventory',
-      origin,
       missingShips: [],
       missingEquipments: [],
       missingInventoryParts,
       notes: requirement.notes ?? [],
-      requirement,
     }
   }
 
@@ -334,13 +387,113 @@ export const analyzeQuestRequirement = (
   }
 
   return {
-    gameId,
     status,
-    origin,
     missingShips: shipDeficits,
     missingEquipments: equipmentDeficits,
     missingInventoryParts: [],
     notes: requirement.notes ?? [],
+  }
+}
+
+const pickClosestAlternative = (
+  alternatives: EvaluatedAlternative[],
+): EvaluatedAlternative =>
+  alternatives.reduce((best, current) => {
+    const bestScore =
+      countMissingEntries(best.evaluation.missingShips) +
+      countMissingEntries(best.evaluation.missingEquipments) +
+      best.evaluation.missingInventoryParts.length
+    const currentScore =
+      countMissingEntries(current.evaluation.missingShips) +
+      countMissingEntries(current.evaluation.missingEquipments) +
+      current.evaluation.missingInventoryParts.length
+
+    return currentScore < bestScore ? current : best
+  })
+
+const resolveRequirementEvaluation = (
+  requirement: QuestRequirement,
+  inventory: InventorySnapshot | ImportedInventoryState,
+): {
+  evaluation: RequirementEvaluation
+  debugRequirement: QuestRequirementBase
+} => {
+  if (!requirement.anyOf?.length) {
+    const baseRequirement = getBaseRequirement(requirement)
+    return {
+      evaluation: evaluateRequirement(baseRequirement, inventory),
+      debugRequirement: baseRequirement,
+    }
+  }
+
+  const baseRequirement = getBaseRequirement(requirement)
+  const alternatives = requirement.anyOf.map((branch) => {
+    const mergedRequirement = mergeRequirementBranch(baseRequirement, branch)
+    return {
+      label: branch.label,
+      requirement: mergedRequirement,
+      evaluation: evaluateRequirement(mergedRequirement, inventory),
+    }
+  })
+
+  const matchedAlternative = alternatives.find(
+    (alternative) => alternative.evaluation.status === 'ready',
+  )
+  if (matchedAlternative) {
+    return {
+      evaluation: {
+        ...matchedAlternative.evaluation,
+        notes: [
+          ...matchedAlternative.evaluation.notes,
+          `已符合替代條件：${matchedAlternative.label}`,
+        ],
+      },
+      debugRequirement: matchedAlternative.requirement,
+    }
+  }
+
+  const closestAlternative = pickClosestAlternative(alternatives)
+  return {
+    evaluation: {
+      ...closestAlternative.evaluation,
+      notes: [
+        ...closestAlternative.evaluation.notes,
+        `目前最接近的替代條件：${closestAlternative.label}`,
+      ],
+    },
+    debugRequirement: closestAlternative.requirement,
+  }
+}
+
+export const analyzeQuestRequirement = (
+  gameId: number,
+  requirement: QuestRequirement | null | undefined,
+  inventory: InventorySnapshot | ImportedInventoryState,
+  origin: QuestAnalysisOrigin = 'curated',
+): QuestAnalysis => {
+  if (!requirement) {
+    return {
+      gameId,
+      status: 'unsupported',
+      origin: 'none',
+      missingShips: [],
+      missingEquipments: [],
+      missingInventoryParts: [],
+      notes: [],
+      requirement: null,
+    }
+  }
+
+  const { evaluation } = resolveRequirementEvaluation(requirement, inventory)
+
+  return {
+    gameId,
+    status: evaluation.status,
+    origin,
+    missingShips: evaluation.missingShips,
+    missingEquipments: evaluation.missingEquipments,
+    missingInventoryParts: evaluation.missingInventoryParts,
+    notes: evaluation.notes,
     requirement,
   }
 }
@@ -362,7 +515,9 @@ export const debugQuestRequirement = (
     }
   }
 
-  const shipMatchers = buildShipMatcher(requirement).map((matcher) => {
+  const { debugRequirement } = resolveRequirementEvaluation(requirement, inventory)
+
+  const shipMatchers = buildShipMatcher(debugRequirement).map((matcher) => {
     const matchedShips = inventory.ships
       .filter((ship) => matcher.match(ship))
       .map((ship) => ({
@@ -385,7 +540,7 @@ export const debugQuestRequirement = (
     status: analysis.status,
     origin: analysis.origin,
     shipMatchers,
-    equipmentMatchers: buildEquipmentMatcherDebug(requirement, inventory),
+    equipmentMatchers: buildEquipmentMatcherDebug(debugRequirement, inventory),
   }
 }
 

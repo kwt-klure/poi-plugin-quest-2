@@ -663,6 +663,169 @@ describe('analyzeQuestRequirement', () => {
     })
   })
 
+  test('supports curated anyOf branches and marks the satisfied alternative path', () => {
+    const alternativeInventory = {
+      ...inventory,
+      ships: [
+        ...inventory.ships,
+        {
+          id: '21',
+          shipId: 21,
+          name: '祥鳳改',
+          shipType: 7,
+          shipClass: 52,
+          compatibleNames: ['祥鳳', '祥鳳改'],
+          remodelRank: 1,
+        },
+        {
+          id: '22',
+          shipId: 22,
+          name: '龍驤改二',
+          shipType: 7,
+          shipClass: 28,
+          compatibleNames: ['龍驤', '龍驤改', '龍驤改二'],
+          remodelRank: 2,
+        },
+      ],
+    }
+
+    const requirement: QuestRequirement = {
+      anyOf: [
+        {
+          label: 'Langley 旗艦',
+          positions: {
+            flagship: [{ label: '旗艦：Langley', names: ['Langley'] }],
+          },
+        },
+        {
+          label: '輕空母 2 艘以上',
+          shipTypes: [{ label: '輕空母 2 艘', shipTypes: [7], count: 2 }],
+        },
+      ],
+      notes: ['僅檢查編成條件，不檢查指定海域與勝利次數。'],
+    }
+
+    expect(
+      analyzeQuestRequirement(260304, requirement, alternativeInventory),
+    ).toMatchObject({
+      status: 'ready',
+      origin: 'curated',
+      missingShips: [],
+      notes: [
+        '僅檢查編成條件，不檢查指定海域與勝利次數。',
+        '已符合替代條件：輕空母 2 艘以上',
+      ],
+    })
+  })
+
+  test('shows the closest curated anyOf branch when no alternative path is currently satisfied', () => {
+    const closestBranchInventory = {
+      ...inventory,
+      ships: [
+        ...inventory.ships,
+        {
+          id: '31',
+          shipId: 31,
+          name: '祥鳳改',
+          shipType: 7,
+          shipClass: 52,
+          compatibleNames: ['祥鳳', '祥鳳改'],
+          remodelRank: 1,
+        },
+      ],
+    }
+
+    const requirement: QuestRequirement = {
+      anyOf: [
+        {
+          label: 'Langley 旗艦且輕巡 1 艘',
+          positions: {
+            flagship: [{ label: '旗艦：Langley', names: ['Langley'] }],
+          },
+          shipTypes: [{ label: '輕巡 1 艘', shipTypes: [3], count: 1 }],
+        },
+        {
+          label: '輕空母 2 艘以上',
+          shipTypes: [{ label: '輕空母 2 艘', shipTypes: [7], count: 2 }],
+        },
+      ],
+      notes: ['僅檢查編成條件，不檢查指定海域與勝利次數。'],
+    }
+
+    expect(
+      analyzeQuestRequirement(260305, requirement, closestBranchInventory),
+    ).toMatchObject({
+      status: 'missing_ships',
+      origin: 'curated',
+      missingShips: ['輕空母 2 艘 x1'],
+      notes: [
+        '僅檢查編成條件，不檢查指定海域與勝利次數。',
+        '目前最接近的替代條件：輕空母 2 艘以上',
+      ],
+    })
+  })
+
+  test('keeps curated anyOf rules ahead of inferred fallback', () => {
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 260304,
+          docQuest: {
+            code: '2603B4',
+            name: '【WD限定任務】輕空母、出擊！2026',
+            desc: '以「Langley」為旗艦，或旗艦不限且包含 2 艘以上輕空母的艦隊出擊。',
+          },
+        },
+      ] as any,
+      {
+        260304: {
+          anyOf: [
+            {
+              label: 'Langley 旗艦',
+              positions: {
+                flagship: [{ label: '旗艦：Langley', names: ['Langley'] }],
+              },
+            },
+            {
+              label: '輕空母 2 艘以上',
+              shipTypes: [{ label: '輕空母 2 艘', shipTypes: [7], count: 2 }],
+            },
+          ],
+        },
+      },
+      {
+        ...inventory,
+        ships: [
+          ...inventory.ships,
+          {
+            id: '41',
+            shipId: 41,
+            name: '祥鳳改',
+            shipType: 7,
+            shipClass: 52,
+            compatibleNames: ['祥鳳', '祥鳳改'],
+            remodelRank: 1,
+          },
+          {
+            id: '42',
+            shipId: 42,
+            name: '龍驤改二',
+            shipType: 7,
+            shipClass: 28,
+            compatibleNames: ['龍驤', '龍驤改', '龍驤改二'],
+            remodelRank: 2,
+          },
+        ],
+      },
+    )
+
+    expect(analysisMap[260304]).toMatchObject({
+      status: 'ready',
+      origin: 'curated',
+      notes: ['已符合替代條件：輕空母 2 艘以上'],
+    })
+  })
+
   test('returns not_applicable for pure progress quests such as Bw7', () => {
     const analysisMap = buildQuestAnalysisMap(
       [
