@@ -1,4 +1,4 @@
-import type { UnionQuest } from './questHelper'
+import { QUEST_STATUS, type UnionQuest } from './questHelper'
 import { resolveQuestRequirement, SHIP_GROUPS } from './requirements'
 import type {
   PositionRequirement,
@@ -31,7 +31,7 @@ export interface InventorySnapshot {
   equipments: OwnedEquipment[]
 }
 
-export type QuestAnalysisStatus =
+export type QuestStructuralFeasibility =
   | 'ready'
   | 'missing_ships'
   | 'missing_equipments'
@@ -40,11 +40,31 @@ export type QuestAnalysisStatus =
   | 'not_applicable'
   | 'unsupported'
 
+export type QuestPlanningStatus =
+  | 'actionable'
+  | 'blocked'
+  | 'already_done'
+  | 'probably_done'
+  | 'state_unknown'
+  | 'not_applicable'
+  | 'unsupported'
+
+export type QuestAcceptability = 'available' | 'locked' | 'unknown'
+
+export type QuestCompletionState =
+  | 'completed_live'
+  | 'completed_inferred'
+  | 'incomplete'
+  | 'unknown'
+
 export type QuestAnalysisOrigin = 'curated' | 'inferred' | 'none'
 
 export interface QuestAnalysis {
   gameId: number
-  status: QuestAnalysisStatus
+  status: QuestPlanningStatus
+  structuralFeasibility: QuestStructuralFeasibility
+  acceptability: QuestAcceptability
+  completionState: QuestCompletionState
   origin: QuestAnalysisOrigin
   missingShips: string[]
   missingEquipments: string[]
@@ -54,11 +74,11 @@ export interface QuestAnalysis {
 }
 
 export interface QuestAnalysisSummary {
-  ready: number
-  missing_ships: number
-  missing_equipments: number
-  missing_both: number
-  missing_inventory: number
+  actionable: number
+  blocked: number
+  already_done: number
+  probably_done: number
+  state_unknown: number
   not_applicable: number
   unsupported: number
 }
@@ -70,7 +90,7 @@ type ShipMatcher = {
 }
 
 type RequirementEvaluation = {
-  status: QuestAnalysisStatus
+  status: QuestStructuralFeasibility
   missingShips: string[]
   missingEquipments: string[]
   missingInventoryParts: Array<'ships' | 'equipments'>
@@ -108,10 +128,18 @@ export interface EquipmentMatcherDebug {
 
 export interface QuestAnalysisDebug {
   gameId: number
-  status: QuestAnalysisStatus
+  status: QuestPlanningStatus
+  structuralFeasibility: QuestStructuralFeasibility
+  acceptability: QuestAcceptability
+  completionState: QuestCompletionState
   origin: QuestAnalysisOrigin
   shipMatchers: ShipMatcherDebug[]
   equipmentMatchers: EquipmentMatcherDebug[]
+}
+
+type QuestLiveState = {
+  acceptability: QuestAcceptability
+  completionState: QuestCompletionState
 }
 
 const resolveShipNames = (shipRequirement: ShipRequirement): string[] => {
@@ -343,6 +371,69 @@ const hasRequirementConditions = (requirement: QuestRequirementBase) =>
   Boolean(requirement.positions?.flagship?.length) ||
   Boolean(requirement.positions?.second?.length)
 
+const resolveQuestLiveState = (questStatus: QUEST_STATUS): QuestLiveState => {
+  switch (questStatus) {
+    case QUEST_STATUS.COMPLETED:
+      return {
+        acceptability: 'available',
+        completionState: 'completed_live',
+      }
+    case QUEST_STATUS.ALREADY_COMPLETED:
+      return {
+        acceptability: 'available',
+        completionState: 'completed_inferred',
+      }
+    case QUEST_STATUS.LOCKED:
+      return {
+        acceptability: 'locked',
+        completionState: 'incomplete',
+      }
+    case QUEST_STATUS.DEFAULT:
+    case QUEST_STATUS.IN_PROGRESS:
+      return {
+        acceptability: 'available',
+        completionState: 'incomplete',
+      }
+    case QUEST_STATUS.UNKNOWN:
+    default:
+      return {
+        acceptability: 'unknown',
+        completionState: 'unknown',
+      }
+  }
+}
+
+const resolvePlanningStatus = ({
+  acceptability,
+  completionState,
+  structuralFeasibility,
+}: QuestLiveState & {
+  structuralFeasibility: QuestStructuralFeasibility
+}): QuestPlanningStatus => {
+  if (completionState === 'completed_live') {
+    return 'already_done'
+  }
+  if (completionState === 'completed_inferred') {
+    return 'probably_done'
+  }
+  if (acceptability === 'locked') {
+    return 'blocked'
+  }
+  if (acceptability === 'unknown') {
+    return 'state_unknown'
+  }
+  if (structuralFeasibility === 'ready') {
+    return 'actionable'
+  }
+  if (structuralFeasibility === 'not_applicable') {
+    return 'not_applicable'
+  }
+  if (structuralFeasibility === 'unsupported') {
+    return 'unsupported'
+  }
+  return 'blocked'
+}
+
 const evaluateRequirement = (
   requirement: QuestRequirementBase,
   inventory: InventorySnapshot | ImportedInventoryState,
@@ -377,7 +468,7 @@ const evaluateRequirement = (
     shipDeficits.push('艦隊編成條件衝突 x1')
   }
 
-  let status: QuestAnalysisStatus = 'ready'
+  let status: QuestStructuralFeasibility = 'ready'
   if (!shipReady && !equipmentReady) {
     status = 'missing_both'
   } else if (!shipReady) {
@@ -469,12 +560,21 @@ export const analyzeQuestRequirement = (
   gameId: number,
   requirement: QuestRequirement | null | undefined,
   inventory: InventorySnapshot | ImportedInventoryState,
+  questStatus: QUEST_STATUS = QUEST_STATUS.UNKNOWN,
   origin: QuestAnalysisOrigin = 'curated',
 ): QuestAnalysis => {
+  const liveState = resolveQuestLiveState(questStatus)
+
   if (!requirement) {
     return {
       gameId,
-      status: 'unsupported',
+      status: resolvePlanningStatus({
+        ...liveState,
+        structuralFeasibility: 'unsupported',
+      }),
+      structuralFeasibility: 'unsupported',
+      acceptability: liveState.acceptability,
+      completionState: liveState.completionState,
       origin: 'none',
       missingShips: [],
       missingEquipments: [],
@@ -488,7 +588,13 @@ export const analyzeQuestRequirement = (
 
   return {
     gameId,
-    status: evaluation.status,
+    status: resolvePlanningStatus({
+      ...liveState,
+      structuralFeasibility: evaluation.status,
+    }),
+    structuralFeasibility: evaluation.status,
+    acceptability: liveState.acceptability,
+    completionState: liveState.completionState,
     origin,
     missingShips: evaluation.missingShips,
     missingEquipments: evaluation.missingEquipments,
@@ -502,13 +608,23 @@ export const debugQuestRequirement = (
   gameId: number,
   requirement: QuestRequirement | null | undefined,
   inventory: InventorySnapshot | ImportedInventoryState,
+  questStatus: QUEST_STATUS = QUEST_STATUS.UNKNOWN,
   origin: QuestAnalysisOrigin = 'curated',
 ): QuestAnalysisDebug => {
-  const analysis = analyzeQuestRequirement(gameId, requirement, inventory, origin)
+  const analysis = analyzeQuestRequirement(
+    gameId,
+    requirement,
+    inventory,
+    questStatus,
+    origin,
+  )
   if (!requirement) {
     return {
       gameId,
       status: analysis.status,
+      structuralFeasibility: analysis.structuralFeasibility,
+      acceptability: analysis.acceptability,
+      completionState: analysis.completionState,
       origin: analysis.origin,
       shipMatchers: [],
       equipmentMatchers: [],
@@ -538,6 +654,9 @@ export const debugQuestRequirement = (
   return {
     gameId,
     status: analysis.status,
+    structuralFeasibility: analysis.structuralFeasibility,
+    acceptability: analysis.acceptability,
+    completionState: analysis.completionState,
     origin: analysis.origin,
     shipMatchers,
     equipmentMatchers: buildEquipmentMatcherDebug(debugRequirement, inventory),
@@ -546,10 +665,19 @@ export const debugQuestRequirement = (
 
 const buildStaticQuestAnalysis = (
   gameId: number,
-  status: Extract<QuestAnalysisStatus, 'unsupported' | 'not_applicable'>,
+  structuralFeasibility: Extract<
+    QuestStructuralFeasibility,
+    'unsupported' | 'not_applicable'
+  >,
+  questStatus: QUEST_STATUS = QUEST_STATUS.UNKNOWN,
 ): QuestAnalysis => ({
   gameId,
-  status,
+  status: resolvePlanningStatus({
+    ...resolveQuestLiveState(questStatus),
+    structuralFeasibility,
+  }),
+  structuralFeasibility,
+  ...resolveQuestLiveState(questStatus),
   origin: 'none',
   missingShips: [],
   missingEquipments: [],
@@ -562,9 +690,11 @@ export const buildQuestAnalysisMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
   inventory: InventorySnapshot | ImportedInventoryState,
+  questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysis> =>
   Object.fromEntries(
     quests.map((quest) => {
+      const questStatus = questStatusQuery(quest.gameId)
       const resolvedRequirement = resolveQuestRequirement(
         quest,
         requirementMap[quest.gameId],
@@ -578,6 +708,7 @@ export const buildQuestAnalysisMap = (
               quest.gameId,
               resolvedRequirement.requirement,
               inventory,
+              questStatus,
               'curated',
             ),
           ]
@@ -588,14 +719,21 @@ export const buildQuestAnalysisMap = (
               quest.gameId,
               resolvedRequirement.requirement,
               inventory,
+              questStatus,
               'inferred',
             ),
           ]
         case 'not_applicable':
-          return [quest.gameId, buildStaticQuestAnalysis(quest.gameId, 'not_applicable')]
+          return [
+            quest.gameId,
+            buildStaticQuestAnalysis(quest.gameId, 'not_applicable', questStatus),
+          ]
         case 'unsupported':
         default:
-          return [quest.gameId, buildStaticQuestAnalysis(quest.gameId, 'unsupported')]
+          return [
+            quest.gameId,
+            buildStaticQuestAnalysis(quest.gameId, 'unsupported', questStatus),
+          ]
       }
     }),
   )
@@ -604,11 +742,11 @@ export const summarizeQuestAnalysis = (
   analysisMap: Record<number, QuestAnalysis>,
 ): QuestAnalysisSummary => {
   const summary: QuestAnalysisSummary = {
-    ready: 0,
-    missing_ships: 0,
-    missing_equipments: 0,
-    missing_both: 0,
-    missing_inventory: 0,
+    actionable: 0,
+    blocked: 0,
+    already_done: 0,
+    probably_done: 0,
+    state_unknown: 0,
     not_applicable: 0,
     unsupported: 0,
   }
@@ -620,21 +758,23 @@ export const summarizeQuestAnalysis = (
   return summary
 }
 
-export const isQuestRequirementReady = (
+export const isQuestActionable = (
   analysis: QuestAnalysis | null | undefined,
-) => analysis?.status === 'ready'
+) => analysis?.status === 'actionable'
 
-export const buildReadyQuestFilter =
+export const buildActionableQuestFilter =
   (analysisMap: Record<number, QuestAnalysis>) => (quest: UnionQuest) =>
-    isQuestRequirementReady(analysisMap[quest.gameId])
+    isQuestActionable(analysisMap[quest.gameId])
 
 export const buildQuestAnalysisDebugMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
   inventory: InventorySnapshot | ImportedInventoryState,
+  questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysisDebug> =>
   Object.fromEntries(
     quests.map((quest) => {
+      const questStatus = questStatusQuery(quest.gameId)
       const resolvedRequirement = resolveQuestRequirement(
         quest,
         requirementMap[quest.gameId],
@@ -648,6 +788,7 @@ export const buildQuestAnalysisDebugMap = (
               quest.gameId,
               resolvedRequirement.requirement,
               inventory,
+              questStatus,
               'curated',
             ),
           ]
@@ -658,6 +799,7 @@ export const buildQuestAnalysisDebugMap = (
               quest.gameId,
               resolvedRequirement.requirement,
               inventory,
+              questStatus,
               'inferred',
             ),
           ]
@@ -666,7 +808,12 @@ export const buildQuestAnalysisDebugMap = (
             quest.gameId,
             {
               gameId: quest.gameId,
-              status: 'not_applicable',
+              status: resolvePlanningStatus({
+                ...resolveQuestLiveState(questStatus),
+                structuralFeasibility: 'not_applicable',
+              }),
+              structuralFeasibility: 'not_applicable',
+              ...resolveQuestLiveState(questStatus),
               origin: 'none',
               shipMatchers: [],
               equipmentMatchers: [],
@@ -678,7 +825,12 @@ export const buildQuestAnalysisDebugMap = (
             quest.gameId,
             {
               gameId: quest.gameId,
-              status: 'unsupported',
+              status: resolvePlanningStatus({
+                ...resolveQuestLiveState(questStatus),
+                structuralFeasibility: 'unsupported',
+              }),
+              structuralFeasibility: 'unsupported',
+              ...resolveQuestLiveState(questStatus),
               origin: 'none',
               shipMatchers: [],
               equipmentMatchers: [],

@@ -1,7 +1,7 @@
 import { Icon, IconSize, Tooltip } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
 import React from 'react'
-import type { QuestAnalysis, QuestAnalysisStatus } from '../../analysis'
+import type { QuestAnalysis, QuestPlanningStatus } from '../../analysis'
 import {
   IconArsenal,
   IconCompleted,
@@ -85,16 +85,15 @@ export const countMissingEntries = (entries: string[]) =>
     return total + Number(matched[1])
   }, 0)
 
-export const getQuestAnalysisIntent = (status: QuestAnalysisStatus) => {
+export const getQuestAnalysisIntent = (status: QuestPlanningStatus) => {
   switch (status) {
-    case 'ready':
+    case 'actionable':
       return 'success' as const
-    case 'missing_ships':
-    case 'missing_equipments':
-    case 'missing_inventory':
+    case 'blocked':
+    case 'state_unknown':
+    case 'probably_done':
       return 'warning' as const
-    case 'missing_both':
-      return 'danger' as const
+    case 'already_done':
     case 'not_applicable':
     case 'unsupported':
     default:
@@ -107,8 +106,62 @@ export const getQuestAnalysisSummary = (
   t: (key: string, options?: Record<string, unknown>) => string,
 ) => {
   switch (analysis.status) {
-    case 'ready':
-      return t('Requirement Ready')
+    case 'actionable':
+      return t('Actionable')
+    case 'blocked':
+      return t('Blocked')
+    case 'already_done':
+      return t('Already Done')
+    case 'probably_done':
+      return t('Probably Done')
+    case 'state_unknown':
+      return t('State Unknown')
+    case 'not_applicable':
+      return t('Not Applicable Summary')
+    case 'unsupported':
+    default:
+      return t('Requirement Unsupported')
+  }
+}
+
+export const getQuestAnalysisPrimaryDetail = (
+  analysis: QuestAnalysis,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) => {
+  switch (analysis.status) {
+    case 'already_done':
+      return t('Quest Already Done Detail')
+    case 'probably_done':
+      return t('Quest Probably Done Detail')
+    case 'state_unknown':
+      return t('Quest State Unknown Detail')
+    case 'blocked':
+      if (analysis.acceptability === 'locked') {
+        return t('Quest Blocked Locked Detail')
+      }
+      if (analysis.structuralFeasibility === 'missing_inventory') {
+        return analysis.missingInventoryParts.includes('ships') &&
+          analysis.missingInventoryParts.includes('equipments')
+          ? t('Inventory Missing Detail Both')
+          : analysis.missingInventoryParts.includes('ships')
+            ? t('Inventory Missing Detail Ships')
+            : t('Inventory Missing Detail Equipments')
+      }
+      return t('Quest Blocked Detail')
+    case 'not_applicable':
+      return t('Not Applicable Detail')
+    case 'unsupported':
+      return t('Requirement Unsupported Detail')
+    default:
+      return null
+  }
+}
+
+export const getQuestAnalysisSecondarySummary = (
+  analysis: QuestAnalysis,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) => {
+  switch (analysis.structuralFeasibility) {
     case 'missing_ships':
       return t('Missing Ships Summary', {
         number: countMissingEntries(analysis.missingShips),
@@ -121,10 +174,7 @@ export const getQuestAnalysisSummary = (
       return t('Missing Ships and Equipments')
     case 'missing_inventory':
       return t('Inventory Missing Summary')
-    case 'not_applicable':
-      return t('Not Applicable Summary')
-    case 'unsupported':
     default:
-      return t('Requirement Unsupported')
+      return null
   }
 }

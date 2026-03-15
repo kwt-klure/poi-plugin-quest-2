@@ -29,6 +29,8 @@ import {
 } from './styles'
 import {
   getQuestAnalysisIntent,
+  getQuestAnalysisPrimaryDetail,
+  getQuestAnalysisSecondarySummary,
   getQuestAnalysisSummary,
   questIconMap,
   questStatusMap,
@@ -134,6 +136,11 @@ export const QuestCard = forwardRef<
               <Tag intent={getQuestAnalysisIntent(analysis.status)} minimal={true}>
                 {getQuestAnalysisSummary(analysis, t)}
               </Tag>
+              {getQuestAnalysisSecondarySummary(analysis, t) ? (
+                <Tag minimal={true}>
+                  {getQuestAnalysisSecondarySummary(analysis, t)}
+                </Tag>
+              ) : null}
               {analysis.origin === 'inferred' ? (
                 <Tag intent="warning" minimal={true}>
                   {t('Requirement Inferred')}
@@ -141,20 +148,15 @@ export const QuestCard = forwardRef<
               ) : null}
             </AnalysisList>
 
-            {analysis.status === 'unsupported' ? (
-              <AnalysisText>{t('Requirement Unsupported Detail')}</AnalysisText>
-            ) : analysis.status === 'not_applicable' ? (
-              <AnalysisText>{t('Not Applicable Detail')}</AnalysisText>
-            ) : analysis.status === 'missing_inventory' ? (
+            {getQuestAnalysisPrimaryDetail(analysis, t) ? (
               <AnalysisText>
-                {analysis.missingInventoryParts.includes('ships') &&
-                analysis.missingInventoryParts.includes('equipments')
-                  ? t('Inventory Missing Detail Both')
-                  : analysis.missingInventoryParts.includes('ships')
-                    ? t('Inventory Missing Detail Ships')
-                    : t('Inventory Missing Detail Equipments')}
+                {getQuestAnalysisPrimaryDetail(analysis, t)}
               </AnalysisText>
             ) : (
+              <></>
+            )}
+
+            {analysis.structuralFeasibility !== 'missing_inventory' && (
               <>
                 {analysis.missingShips.length > 0 && (
                   <AnalysisText>
@@ -166,11 +168,11 @@ export const QuestCard = forwardRef<
                     <b>{t('Missing Equipments')}</b>: {analysis.missingEquipments.join('、')}
                   </AnalysisText>
                 )}
-                {analysis.notes.map((note) => (
-                  <AnalysisText key={note}>{note}</AnalysisText>
-                ))}
               </>
             )}
+            {analysis.notes.map((note) => (
+              <AnalysisText key={note}>{note}</AnalysisText>
+            ))}
           </AnalysisBlock>
         )}
 

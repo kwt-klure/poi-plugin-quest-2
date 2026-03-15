@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Minor Changes
+
+- Redefine quest analysis `status` as a planner-facing state model so completed, inferred-completed, locked, and unknown quests no longer collapse into `ready`.
+- Add explicit `structuralFeasibility`, `acceptability`, and `completionState` layers to exported quest analysis JSON and switch the primary UI/filter wording from `Requirement Ready` to `Actionable`.
+
 ### Patch Changes
 
 - Add a runtime quest overlay layer so newly discovered quests can be patched in locally without editing the generated `build/*` data pipeline.

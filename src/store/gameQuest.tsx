@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import React, { createContext, useContext } from 'react'
-import { useGameQuest } from '../poi/hooks'
+import { useGameQuest, useObservedGameQuest } from '../poi/hooks'
 import type { GameQuest } from '../poi/types'
 import {
   QUEST_STATUS,
@@ -11,6 +11,7 @@ import {
 
 export const GameQuestContext = createContext<{
   gameQuest: GameQuest[]
+  observedGameQuest: GameQuest[]
   questStatusQuery: (gameId: number) => QUEST_STATUS
   lockedQuestNum: number
   unlockedQuestNum: number
@@ -18,6 +19,7 @@ export const GameQuestContext = createContext<{
   alreadyCompletedQuestNum: number
 }>({
   gameQuest: [],
+  observedGameQuest: [],
   questStatusQuery: () => QUEST_STATUS.UNKNOWN,
   lockedQuestNum: 0,
   unlockedQuestNum: 0,
@@ -60,18 +62,20 @@ const useQuestStatusQuery = (inProgressQuests: GameQuest[]) => {
 
 export const GameQuestProvider = ({ children }: { children?: ReactNode }) => {
   const gameQuest = useGameQuest()
+  const observedGameQuest = useObservedGameQuest()
   const {
     lockedQuestNum,
     unlockedQuestNum,
     completedQuestNum,
     alreadyCompletedQuestNum,
     questStatusQuery,
-  } = useQuestStatusQuery(gameQuest)
+  } = useQuestStatusQuery(observedGameQuest)
 
   return (
     <GameQuestContext.Provider
       value={{
         gameQuest,
+        observedGameQuest,
         questStatusQuery,
         lockedQuestNum,
         unlockedQuestNum,
@@ -92,6 +96,11 @@ export const GameQuestProvider = ({ children }: { children?: ReactNode }) => {
 export const useGlobalGameQuest = () => {
   const { gameQuest } = useContext(GameQuestContext)
   return gameQuest
+}
+
+export const useGlobalObservedGameQuest = () => {
+  const { observedGameQuest } = useContext(GameQuestContext)
+  return observedGameQuest
 }
 
 /**

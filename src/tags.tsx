@@ -1,7 +1,7 @@
 import { Tag } from '@blueprintjs/core'
 import React from 'react'
 import styled from 'styled-components'
-import { isQuestRequirementReady } from './analysis'
+import { isQuestActionable } from './analysis'
 import { usePluginTranslation } from './poi/hooks'
 import type { GameQuest } from './poi/types'
 import type { UnionQuest } from './questHelper'
@@ -63,7 +63,7 @@ export const TYPE_TAGS = [
     filter: withGameQuestOr(isInProgressQuest, false),
   },
   {
-    name: 'Requirement Ready',
+    name: 'Actionable',
     filter: () => false,
   },
   { name: 'New', filter: isNewQuest },
@@ -174,8 +174,8 @@ export const TypeTags = () => {
   const inProgressQuest = gameQuests.filter((gameQuest) =>
     isInProgressQuest(gameQuest),
   )
-  const readyQuestCount = quests.filter((quest) =>
-    isQuestRequirementReady(analysisMap[quest.gameId]),
+  const actionableQuestCount = quests.filter((quest) =>
+    isQuestActionable(analysisMap[quest.gameId]),
   ).length
   const { typeTags, setTypeTags } = useFilterTags()
 
@@ -205,11 +205,11 @@ export const TypeTags = () => {
       </Tag>
 
       <Tag
-        intent={typeTags['Requirement Ready'] ? 'success' : 'none'}
+        intent={typeTags['Actionable'] ? 'success' : 'none'}
         interactive={true}
-        onClick={() => setTypeTags('Requirement Ready')}
+        onClick={() => setTypeTags('Actionable')}
       >
-        {t('Requirement Ready Filter', { number: readyQuestCount })}
+        {t('Actionable Filter', { number: actionableQuestCount })}
       </Tag>
 
       {hasNewQuest && (

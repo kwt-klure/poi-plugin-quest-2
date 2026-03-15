@@ -4,6 +4,7 @@ import type {
   QuestAnalysisSummary,
 } from './analysis'
 import type { ImportedCsvMeta } from './importedInventory/types'
+import type { GameQuest, PoiQuestState } from './poi/types'
 import type { UnionQuest } from './questHelper'
 
 export interface QuestExportRecord {
@@ -16,6 +17,9 @@ export interface QuestExportRecord {
   inGameState: number | null
   analysis: {
     status: QuestAnalysis['status']
+    structuralFeasibility: QuestAnalysis['structuralFeasibility']
+    acceptability: QuestAnalysis['acceptability']
+    completionState: QuestAnalysis['completionState']
     origin: QuestAnalysis['origin']
     missingShips: string[]
     missingEquipments: string[]
@@ -32,6 +36,13 @@ export interface QuestExportPayload {
     shipCsv: ImportedCsvMeta | null
     equipmentCsv: ImportedCsvMeta | null
   }
+  gameQuestSnapshot: {
+    currentTabQuestList: GameQuest[]
+    observedQuestList: GameQuest[]
+    activeQuestMap: PoiQuestState
+    unknownObservedQuests: GameQuest[]
+    unknownActiveQuests: GameQuest[]
+  }
   quests: QuestExportRecord[]
   analysisSummary: QuestAnalysisSummary
 }
@@ -43,6 +54,9 @@ export const buildQuestExportPayload = ({
   summary,
   inventory,
   pluginVersion,
+  currentTabQuestList,
+  observedQuestList,
+  activeQuestMap,
 }: {
   quests: UnionQuest[]
   analysisMap: Record<number, QuestAnalysis>
@@ -53,10 +67,26 @@ export const buildQuestExportPayload = ({
     equipmentCsv: ImportedCsvMeta | null
   }
   pluginVersion: string
+  currentTabQuestList: GameQuest[]
+  observedQuestList: GameQuest[]
+  activeQuestMap: PoiQuestState
 }): QuestExportPayload => ({
   generatedAt: new Date().toISOString(),
   pluginVersion,
   inventory,
+  gameQuestSnapshot: {
+    currentTabQuestList,
+    observedQuestList,
+    activeQuestMap,
+    unknownObservedQuests: observedQuestList.filter(
+      (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+    ),
+    unknownActiveQuests: Object.values(activeQuestMap)
+      .map((item) => item.detail)
+      .filter(
+        (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+      ),
+  },
   quests: quests.map((quest) => ({
     gameId: quest.gameId,
     code: quest.docQuest.code,
@@ -67,6 +97,11 @@ export const buildQuestExportPayload = ({
     inGameState: quest.gameQuest?.api_state ?? null,
     analysis: {
       status: analysisMap[quest.gameId]?.status ?? 'unsupported',
+      structuralFeasibility:
+        analysisMap[quest.gameId]?.structuralFeasibility ?? 'unsupported',
+      acceptability: analysisMap[quest.gameId]?.acceptability ?? 'unknown',
+      completionState:
+        analysisMap[quest.gameId]?.completionState ?? 'unknown',
       origin: analysisMap[quest.gameId]?.origin ?? 'none',
       missingShips: analysisMap[quest.gameId]?.missingShips ?? [],
       missingEquipments: analysisMap[quest.gameId]?.missingEquipments ?? [],

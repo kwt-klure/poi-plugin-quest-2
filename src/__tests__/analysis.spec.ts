@@ -1,13 +1,14 @@
 import {
   analyzeQuestRequirement,
+  buildActionableQuestFilter,
   buildQuestAnalysisMap,
-  buildReadyQuestFilter,
-  isQuestRequirementReady,
+  isQuestActionable,
 } from '../analysis'
 import { parseShipCsvImport } from '../importedInventory/csv'
 import { emptyImportedInventoryState } from '../importedInventory/types'
 import { QUEST_REQUIREMENTS } from '../requirements'
 import type { QuestRequirement } from '../requirements'
+import { QUEST_STATUS } from '../questHelper'
 
 const inventory = {
   ships: [
@@ -64,12 +65,29 @@ const inventory = {
   ],
 }
 
+const availableQuestStatus = () => QUEST_STATUS.DEFAULT
+
+const analyzeAvailableQuestRequirement = (
+  gameId: number,
+  requirement: QuestRequirement | null | undefined,
+  currentInventory = inventory,
+) =>
+  analyzeQuestRequirement(
+    gameId,
+    requirement,
+    currentInventory,
+    QUEST_STATUS.DEFAULT,
+  )
+
 describe('analyzeQuestRequirement', () => {
-  test('detects ready analysis status for ready-filter usage', () => {
+  test('detects actionable analysis status for actionable-filter usage', () => {
     expect(
-      isQuestRequirementReady({
+      isQuestActionable({
         gameId: 1,
-        status: 'ready',
+        status: 'actionable',
+        structuralFeasibility: 'ready',
+        acceptability: 'available',
+        completionState: 'incomplete',
         origin: 'curated',
         missingShips: [],
         missingEquipments: [],
@@ -80,9 +98,12 @@ describe('analyzeQuestRequirement', () => {
     ).toBe(true)
 
     expect(
-      isQuestRequirementReady({
+      isQuestActionable({
         gameId: 2,
-        status: 'missing_ships',
+        status: 'blocked',
+        structuralFeasibility: 'missing_ships',
+        acceptability: 'available',
+        completionState: 'incomplete',
         origin: 'curated',
         missingShips: ['夕張改二 x1'],
         missingEquipments: [],
@@ -93,11 +114,14 @@ describe('analyzeQuestRequirement', () => {
     ).toBe(false)
   })
 
-  test('builds a quest filter that keeps only ready quests', () => {
-    const readyFilter = buildReadyQuestFilter({
+  test('builds a quest filter that keeps only actionable quests', () => {
+    const actionableFilter = buildActionableQuestFilter({
       1: {
         gameId: 1,
-        status: 'ready',
+        status: 'actionable',
+        structuralFeasibility: 'ready',
+        acceptability: 'available',
+        completionState: 'incomplete',
         origin: 'curated',
         missingShips: [],
         missingEquipments: [],
@@ -107,7 +131,10 @@ describe('analyzeQuestRequirement', () => {
       },
       2: {
         gameId: 2,
-        status: 'missing_ships',
+        status: 'blocked',
+        structuralFeasibility: 'missing_ships',
+        acceptability: 'available',
+        completionState: 'incomplete',
         origin: 'curated',
         missingShips: ['皐月改二 x1'],
         missingEquipments: [],
@@ -120,68 +147,78 @@ describe('analyzeQuestRequirement', () => {
     expect(
       [1, 2]
         .map((gameId) => ({ gameId, docQuest: { code: `A${gameId}`, name: '', desc: '' } }))
-        .filter(readyFilter)
+        .filter(actionableFilter)
         .map((quest) => quest.gameId),
     ).toEqual([1])
   })
 
-  test('returns ready when named ship requirement is met', () => {
+  test('returns actionable when named ship requirement is met and quest is available', () => {
     const requirement: QuestRequirement = {
       ships: [{ label: '明石', names: ['明石'], count: 1 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
       missingShips: [],
       missingEquipments: [],
     })
   })
 
-  test('returns missing_ships when named ship requirement is not met', () => {
+  test('returns blocked + missing_ships when named ship requirement is not met', () => {
     const requirement: QuestRequirement = {
       ships: [{ label: '由良改二', names: ['由良改二'], count: 1 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'missing_ships',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       missingShips: ['由良改二 x1'],
     })
   })
 
-  test('returns missing_equipments when equipment requirement is not met', () => {
+  test('returns blocked + missing_equipments when equipment requirement is not met', () => {
     const requirement: QuestRequirement = {
       equipments: [{ label: '對空機銃', type2: [21], count: 3 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'missing_equipments',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'blocked',
+      structuralFeasibility: 'missing_equipments',
       missingEquipments: ['對空機銃 x1'],
     })
   })
 
-  test('returns missing_both when ships and equipments are both missing', () => {
+  test('returns blocked + missing_both when ships and equipments are both missing', () => {
     const requirement: QuestRequirement = {
       ships: [{ label: '由良改二', names: ['由良改二'], count: 1 }],
       equipments: [{ label: '對空機銃', type2: [21], count: 3 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'missing_both',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'blocked',
+      structuralFeasibility: 'missing_both',
       missingShips: ['由良改二 x1'],
       missingEquipments: ['對空機銃 x1'],
     })
   })
 
-  test('returns missing_inventory when required CSV inventory is not imported', () => {
+  test('returns blocked + missing_inventory when required CSV inventory is not imported', () => {
     const requirement: QuestRequirement = {
       ships: [{ label: '明石', names: ['明石'], count: 1 }],
       equipments: [{ label: '對空機銃', type2: [21], count: 1 }],
     }
 
     expect(
-      analyzeQuestRequirement(1, requirement, emptyImportedInventoryState),
+      analyzeQuestRequirement(
+        1,
+        requirement,
+        emptyImportedInventoryState,
+        QUEST_STATUS.DEFAULT,
+      ),
     ).toMatchObject({
-      status: 'missing_inventory',
+      status: 'blocked',
+      structuralFeasibility: 'missing_inventory',
       missingInventoryParts: ['ships', 'equipments'],
     })
   })
@@ -191,8 +228,9 @@ describe('analyzeQuestRequirement', () => {
       ships: [{ label: '綾波', names: ['綾波'], count: 1 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -216,8 +254,9 @@ describe('analyzeQuestRequirement', () => {
       ships: [{ label: '大鯨', names: ['大鯨'], count: 1 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, renamedInventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement, renamedInventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -229,8 +268,9 @@ describe('analyzeQuestRequirement', () => {
       shipTypes: [{ label: '驅逐艦 3 艘', shipTypes: [2], count: 3 }],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, inventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -255,8 +295,9 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, remodeledInventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement, remodeledInventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -308,8 +349,9 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, mikawaInventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement, mikawaInventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -363,8 +405,9 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(analyzeQuestRequirement(175, requirement, dai8Inventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(175, requirement, dai8Inventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -426,8 +469,9 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(analyzeQuestRequirement(185, requirement, taskForceInventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(185, requirement, taskForceInventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -440,12 +484,18 @@ describe('analyzeQuestRequirement', () => {
     const { ships } = parseShipCsvImport(csv)
 
     expect(
-      analyzeQuestRequirement(171, QUEST_REQUIREMENTS[171], {
-        ships,
-        equipments: [],
-      }),
+      analyzeQuestRequirement(
+        171,
+        QUEST_REQUIREMENTS[171],
+        {
+          ships,
+          equipments: [],
+        },
+        QUEST_STATUS.DEFAULT,
+      ),
     ).toMatchObject({
-      status: 'missing_ships',
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       missingShips: ['皐月改二 x1'],
     })
   })
@@ -460,12 +510,18 @@ describe('analyzeQuestRequirement', () => {
     const { ships } = parseShipCsvImport(csv)
 
     expect(
-      analyzeQuestRequirement(185, QUEST_REQUIREMENTS[185], {
-        ships,
-        equipments: [],
-      }),
+      analyzeQuestRequirement(
+        185,
+        QUEST_REQUIREMENTS[185],
+        {
+          ships,
+          equipments: [],
+        },
+        QUEST_STATUS.DEFAULT,
+      ),
     ).toMatchObject({
-      status: 'missing_ships',
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       missingShips: ['第一艦隊旗艦：Saratoga Mk.II / Mod.2 x1'],
     })
   })
@@ -479,12 +535,18 @@ describe('analyzeQuestRequirement', () => {
     const { ships } = parseShipCsvImport(csv)
 
     expect(
-      analyzeQuestRequirement(194, QUEST_REQUIREMENTS[194], {
-        ships,
-        equipments: [],
-      }),
+      analyzeQuestRequirement(
+        194,
+        QUEST_REQUIREMENTS[194],
+        {
+          ships,
+          equipments: [],
+        },
+        QUEST_STATUS.DEFAULT,
+      ),
     ).toMatchObject({
-      status: 'missing_ships',
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       missingShips: ['天龍改二 x1', '龍田改二 x1'],
     })
   })
@@ -535,8 +597,9 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(analyzeQuestRequirement(1, requirement, rank1Inventory)).toMatchObject({
-      status: 'missing_ships',
+    expect(analyzeAvailableQuestRequirement(1, requirement, rank1Inventory)).toMatchObject({
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       missingShips: ['第十九驅逐隊 4 艘（改二以上） x3'],
     })
 
@@ -571,8 +634,9 @@ describe('analyzeQuestRequirement', () => {
       }),
     }
 
-    expect(analyzeQuestRequirement(1, requirement, rank2Inventory)).toMatchObject({
-      status: 'ready',
+    expect(analyzeAvailableQuestRequirement(1, requirement, rank2Inventory)).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
     })
   })
 
@@ -590,10 +654,12 @@ describe('analyzeQuestRequirement', () => {
       ] as any,
       {},
       inventory,
+      availableQuestStatus,
     )
 
     expect(analysisMap[188]).toMatchObject({
-      status: 'missing_ships',
+      status: 'blocked',
+      structuralFeasibility: 'missing_ships',
       origin: 'inferred',
       missingShips: ['旗艦：長波改二 x1', '高波改 / 沖波改 / 朝霜改 x1'],
       notes: ['未檢查二艘艦隊細節。', '未檢查隊別編成細節。'],
@@ -655,10 +721,12 @@ describe('analyzeQuestRequirement', () => {
         ],
         equipments: inventory.equipments,
       },
+      availableQuestStatus,
     )
 
     expect(analysisMap[175]).toMatchObject({
-      status: 'ready',
+      status: 'actionable',
+      structuralFeasibility: 'ready',
       origin: 'curated',
     })
   })
@@ -708,7 +776,8 @@ describe('analyzeQuestRequirement', () => {
     expect(
       analyzeQuestRequirement(260304, requirement, alternativeInventory),
     ).toMatchObject({
-      status: 'ready',
+      status: 'state_unknown',
+      structuralFeasibility: 'ready',
       origin: 'curated',
       missingShips: [],
       notes: [
@@ -755,7 +824,8 @@ describe('analyzeQuestRequirement', () => {
     expect(
       analyzeQuestRequirement(260305, requirement, closestBranchInventory),
     ).toMatchObject({
-      status: 'missing_ships',
+      status: 'state_unknown',
+      structuralFeasibility: 'missing_ships',
       origin: 'curated',
       missingShips: ['輕空母 2 艘 x1'],
       notes: [
@@ -817,10 +887,12 @@ describe('analyzeQuestRequirement', () => {
           },
         ],
       },
+      availableQuestStatus,
     )
 
     expect(analysisMap[260304]).toMatchObject({
-      status: 'ready',
+      status: 'actionable',
+      structuralFeasibility: 'ready',
       origin: 'curated',
       notes: ['已符合替代條件：輕空母 2 艘以上'],
     })
@@ -840,10 +912,12 @@ describe('analyzeQuestRequirement', () => {
       ] as any,
       {},
       inventory,
+      availableQuestStatus,
     )
 
     expect(analysisMap[241]).toMatchObject({
       status: 'not_applicable',
+      structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
   })
@@ -862,18 +936,93 @@ describe('analyzeQuestRequirement', () => {
       ] as any,
       {},
       inventory,
+      availableQuestStatus,
     )
 
     expect(analysisMap[9999]).toMatchObject({
       status: 'unsupported',
+      structuralFeasibility: 'unsupported',
       origin: 'none',
     })
   })
 
   test('returns unsupported when requirement is missing', () => {
-    expect(analyzeQuestRequirement(1, null, inventory)).toMatchObject({
+    expect(
+      analyzeQuestRequirement(1, null, inventory, QUEST_STATUS.DEFAULT),
+    ).toMatchObject({
       status: 'unsupported',
+      structuralFeasibility: 'unsupported',
       origin: 'none',
+    })
+  })
+
+  test('maps completed_live quests to already_done even when structurally satisfiable', () => {
+    const requirement: QuestRequirement = {
+      ships: [{ label: '明石', names: ['明石'], count: 1 }],
+    }
+
+    expect(
+      analyzeQuestRequirement(
+        135,
+        requirement,
+        inventory,
+        QUEST_STATUS.COMPLETED,
+      ),
+    ).toMatchObject({
+      status: 'already_done',
+      structuralFeasibility: 'ready',
+      completionState: 'completed_live',
+      acceptability: 'available',
+    })
+  })
+
+  test('maps inferred-completed quests to probably_done even when structurally satisfiable', () => {
+    const requirement: QuestRequirement = {
+      ships: [{ label: '明石', names: ['明石'], count: 1 }],
+    }
+
+    expect(
+      analyzeQuestRequirement(
+        135,
+        requirement,
+        inventory,
+        QUEST_STATUS.ALREADY_COMPLETED,
+      ),
+    ).toMatchObject({
+      status: 'probably_done',
+      structuralFeasibility: 'ready',
+      completionState: 'completed_inferred',
+      acceptability: 'available',
+    })
+  })
+
+  test('maps locked quests to blocked even when structurally satisfiable', () => {
+    const requirement: QuestRequirement = {
+      ships: [{ label: '明石', names: ['明石'], count: 1 }],
+    }
+
+    expect(
+      analyzeQuestRequirement(171, requirement, inventory, QUEST_STATUS.LOCKED),
+    ).toMatchObject({
+      status: 'blocked',
+      structuralFeasibility: 'ready',
+      completionState: 'incomplete',
+      acceptability: 'locked',
+    })
+  })
+
+  test('maps unknown live quest state to state_unknown even when structurally satisfiable', () => {
+    const requirement: QuestRequirement = {
+      ships: [{ label: '明石', names: ['明石'], count: 1 }],
+    }
+
+    expect(
+      analyzeQuestRequirement(1, requirement, inventory, QUEST_STATUS.UNKNOWN),
+    ).toMatchObject({
+      status: 'state_unknown',
+      structuralFeasibility: 'ready',
+      completionState: 'unknown',
+      acceptability: 'unknown',
     })
   })
 })

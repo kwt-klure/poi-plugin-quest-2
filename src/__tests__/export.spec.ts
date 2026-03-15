@@ -18,12 +18,66 @@ describe('buildQuestExportPayload', () => {
           format: 'external_csv',
         },
       },
+      currentTabQuestList: [
+        {
+          api_no: 903,
+          api_state: 2,
+          api_title: '拡張「六水戦」、最前線へ！',
+          api_detail: 'quest description',
+        },
+        {
+          api_no: 1999,
+          api_state: 1,
+          api_title: '未收錄新任務',
+          api_detail: 'unknown quest description',
+        },
+      ] as any,
+      observedQuestList: [
+        {
+          api_no: 903,
+          api_state: 2,
+          api_title: '拡張「六水戦」、最前線へ！',
+          api_detail: 'quest description',
+        },
+        {
+          api_no: 1999,
+          api_state: 1,
+          api_title: '未收錄新任務',
+          api_detail: 'unknown quest description',
+        },
+        {
+          api_no: 2000,
+          api_state: 1,
+          api_title: '別分頁新任務',
+          api_detail: 'unknown tab quest description',
+        },
+      ] as any,
+      activeQuestMap: {
+        903: {
+          time: 0,
+          detail: {
+            api_no: 903,
+            api_state: 2,
+            api_title: '拡張「六水戦」、最前線へ！',
+            api_detail: 'quest description',
+          },
+        },
+        1999: {
+          time: 0,
+          detail: {
+            api_no: 1999,
+            api_state: 1,
+            api_title: '未收錄新任務',
+            api_detail: 'unknown quest description',
+          },
+        },
+      } as any,
       summary: {
-        ready: 1,
-        missing_ships: 0,
-        missing_equipments: 0,
-        missing_both: 0,
-        missing_inventory: 0,
+        actionable: 0,
+        blocked: 1,
+        already_done: 0,
+        probably_done: 0,
+        state_unknown: 0,
         not_applicable: 0,
         unsupported: 0,
       },
@@ -43,7 +97,10 @@ describe('buildQuestExportPayload', () => {
       analysisMap: {
         903: {
           gameId: 903,
-          status: 'missing_inventory',
+          status: 'blocked',
+          structuralFeasibility: 'missing_inventory',
+          acceptability: 'available',
+          completionState: 'incomplete',
           origin: 'curated',
           missingShips: [],
           missingEquipments: [],
@@ -55,7 +112,10 @@ describe('buildQuestExportPayload', () => {
       debugMap: {
         903: {
           gameId: 903,
-          status: 'missing_inventory',
+          status: 'blocked',
+          structuralFeasibility: 'missing_inventory',
+          acceptability: 'available',
+          completionState: 'incomplete',
           origin: 'curated',
           shipMatchers: [],
           equipmentMatchers: [],
@@ -78,7 +138,43 @@ describe('buildQuestExportPayload', () => {
         format: 'external_csv',
       },
     })
-    expect(payload.analysisSummary.missing_inventory).toBe(0)
+    expect(payload.analysisSummary.blocked).toBe(1)
+    expect(payload.gameQuestSnapshot.currentTabQuestList).toEqual([
+      {
+        api_no: 903,
+        api_state: 2,
+        api_title: '拡張「六水戦」、最前線へ！',
+        api_detail: 'quest description',
+      },
+      {
+        api_no: 1999,
+        api_state: 1,
+        api_title: '未收錄新任務',
+        api_detail: 'unknown quest description',
+      },
+    ])
+    expect(payload.gameQuestSnapshot.unknownObservedQuests).toEqual([
+      {
+        api_no: 1999,
+        api_state: 1,
+        api_title: '未收錄新任務',
+        api_detail: 'unknown quest description',
+      },
+      {
+        api_no: 2000,
+        api_state: 1,
+        api_title: '別分頁新任務',
+        api_detail: 'unknown tab quest description',
+      },
+    ])
+    expect(payload.gameQuestSnapshot.unknownActiveQuests).toEqual([
+      {
+        api_no: 1999,
+        api_state: 1,
+        api_title: '未收錄新任務',
+        api_detail: 'unknown quest description',
+      },
+    ])
     expect(payload.quests).toEqual([
       {
         gameId: 903,
@@ -89,7 +185,10 @@ describe('buildQuestExportPayload', () => {
         details: 'detail text',
         inGameState: 2,
         analysis: {
-          status: 'missing_inventory',
+          status: 'blocked',
+          structuralFeasibility: 'missing_inventory',
+          acceptability: 'available',
+          completionState: 'incomplete',
           origin: 'curated',
           missingShips: [],
           missingEquipments: [],
@@ -98,7 +197,10 @@ describe('buildQuestExportPayload', () => {
         },
         debug: {
           gameId: 903,
-          status: 'missing_inventory',
+          status: 'blocked',
+          structuralFeasibility: 'missing_inventory',
+          acceptability: 'available',
+          completionState: 'incomplete',
           origin: 'curated',
           shipMatchers: [],
           equipmentMatchers: [],
@@ -115,12 +217,15 @@ describe('buildQuestExportPayload', () => {
         shipCsv: null,
         equipmentCsv: null,
       },
+      currentTabQuestList: [],
+      observedQuestList: [],
+      activeQuestMap: {},
       summary: {
-        ready: 0,
-        missing_ships: 0,
-        missing_equipments: 0,
-        missing_both: 0,
-        missing_inventory: 0,
+        actionable: 0,
+        blocked: 0,
+        already_done: 0,
+        probably_done: 0,
+        state_unknown: 0,
         not_applicable: 0,
         unsupported: 1,
       },
@@ -143,6 +248,9 @@ describe('buildQuestExportPayload', () => {
       code: 'A1',
       analysis: {
         status: 'unsupported',
+        structuralFeasibility: 'unsupported',
+        acceptability: 'unknown',
+        completionState: 'unknown',
         origin: 'none',
         missingShips: [],
         missingEquipments: [],

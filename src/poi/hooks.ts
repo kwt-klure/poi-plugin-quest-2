@@ -49,6 +49,18 @@ export const useGameQuest = () => {
   return quests
 }
 
+export const useObservedGameQuest = () => {
+  const [quests, setQuests] = useState<GameQuest[]>([])
+  useEffect(() => {
+    const listener = (observedQuestMap: Record<number, GameQuest> | null) =>
+      setQuests(
+        observedQuestMap ? Object.values(observedQuestMap) : emptyArray,
+      )
+    return observePluginStore(listener, (i) => i?._?.observedQuestMap ?? null)
+  }, [setQuests])
+  return quests
+}
+
 export const useGameTab = () => {
   const [tab, setTab] = useState<QuestTab>(QuestTab.ALL)
   useEffect(() => {
@@ -131,7 +143,13 @@ export const useStateExporter = () => {
     importPoiState({
       ext: {
         [PACKAGE_NAME]: {
-          _: { questList: maybeQuestList, tabId: QuestTab.ALL },
+          _: {
+            questList: maybeQuestList,
+            observedQuestMap: Object.fromEntries(
+              maybeQuestList.map((quest) => [quest.api_no, quest]),
+            ),
+            tabId: QuestTab.ALL,
+          },
         },
       },
       ui: {

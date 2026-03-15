@@ -21,11 +21,17 @@ import {
   parseShipCsvImport,
 } from './importedInventory/csv'
 import { IN_POI } from './poi/env'
-import { usePluginTranslation, useStateExporter } from './poi/hooks'
+import {
+  useActiveQuest,
+  usePluginTranslation,
+  useStateExporter,
+} from './poi/hooks'
 import { tips } from './poi/utils'
 import {
   StoreProvider,
   useDataSource,
+  useGlobalGameQuest,
+  useGlobalObservedGameQuest,
   useImportedInventory,
   useImportedInventoryActions,
   useQuest,
@@ -65,6 +71,9 @@ const DataExportArea = () => {
   const { t } = usePluginTranslation()
   const { exportQuestDataToFile, importAsPoiState } = useStateExporter()
   const quests = useQuest()
+  const currentTabQuestList = useGlobalGameQuest()
+  const observedQuestList = useGlobalObservedGameQuest()
+  const activeQuestMap = useActiveQuest()
   const analysisMap = useQuestAnalysisMap()
   const debugMap = useQuestAnalysisDebugMap()
   const analysisSummary = summarizeQuestAnalysis(analysisMap)
@@ -89,6 +98,9 @@ const DataExportArea = () => {
         summary: analysisSummary,
         inventory: importedInventory,
         pluginVersion: PKG.version,
+        currentTabQuestList,
+        observedQuestList,
+        activeQuestMap,
       })
       const saved = await exportQuestDataToFile(payload)
       if (!saved) {
@@ -102,9 +114,12 @@ const DataExportArea = () => {
   }, [
     analysisMap,
     analysisSummary,
+    activeQuestMap,
+    currentTabQuestList,
     debugMap,
     exportQuestDataToFile,
     importedInventory,
+    observedQuestList,
     quests,
     t,
   ])
