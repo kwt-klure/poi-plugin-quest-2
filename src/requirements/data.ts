@@ -40,6 +40,17 @@ export const QUEST_REQUIREMENTS: Record<number, QuestRequirement> = {
     ],
     notes: ['僅檢查指定艦娘，不檢查其餘「第十八戰隊」語義。'],
   },
+  266: {
+    positions: {
+      flagship: [{ label: '旗艦：驅逐艦', shipTypes: [2] }],
+    },
+    shipTypes: [
+      { label: '重巡洋艦 1 艘', shipTypes: [5], count: 1 },
+      { label: '輕巡洋艦 1 艘', shipTypes: [3], count: 1 },
+      { label: '其餘驅逐艦 3 艘', shipTypes: [2], count: 3 },
+    ],
+    notes: ['僅檢查艦種數量與旗艦條件，不檢查 2-5、BOSS 與 S 勝細節。'],
+  },
   318: {
     shipTypes: [{ label: '輕巡 2 艘', shipTypes: [3], count: 2 }],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],

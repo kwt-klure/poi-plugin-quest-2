@@ -37,6 +37,7 @@ const INVENTORY_SIGNAL_PATTERNS = [
 ]
 
 const SPECIAL_VARIANT_SUFFIX_PATTERNS = [/^Mod\./u, /^[甲乙丙丁戊特]$/u]
+const GENERIC_QUOTED_TOKEN_PATTERNS = [/^主力$/u, /^遠征$/u, /^远征$/u]
 
 const buildSourceText = (quest: UnionQuest) =>
   [quest.docQuest.desc, quest.docQuest.memo2].filter(Boolean).join(' ')
@@ -45,6 +46,9 @@ const unique = <T,>(entries: T[]) => Array.from(new Set(entries))
 
 const normalizeName = (name: string) =>
   name.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')
+
+const isGenericQuotedToken = (name: string) =>
+  GENERIC_QUOTED_TOKEN_PATTERNS.some((pattern) => pattern.test(name))
 
 const expandVariantNames = (rawName: string): string[] => {
   const normalized = normalizeName(rawName)
@@ -81,7 +85,7 @@ const expandVariantNames = (rawName: string): string[] => {
 const extractQuotedNames = (text: string): string[] =>
   unique(
     Array.from(text.matchAll(QUOTED_NAME_PATTERN)).flatMap((match) =>
-      expandVariantNames(match[1]),
+      expandVariantNames(match[1]).filter((name) => !isGenericQuotedToken(name)),
     ),
   )
 

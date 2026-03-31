@@ -922,6 +922,54 @@ describe('analyzeQuestRequirement', () => {
     })
   })
 
+  test('treats generic quoted words like 「主力」 as non-inventory signals for sortie progress quests such as Bd7', () => {
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 226,
+          docQuest: {
+            code: 'Bd7',
+            name: '(日任) 掌握南西諸島海域制海權',
+            desc: '派出艦隊在南西諸島海域 (W2) 擊敗敵軍主力艦隊 5 次，捕捉消滅大量敵艦隊「主力」群',
+          },
+        },
+      ] as any,
+      {},
+      inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[226]).toMatchObject({
+      status: 'not_applicable',
+      structuralFeasibility: 'not_applicable',
+      origin: 'none',
+    })
+  })
+
+  test('treats generic quoted words like 「遠征」 as non-inventory signals for expedition count quests such as Dd2', () => {
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 403,
+          docQuest: {
+            code: 'Dd2',
+            name: '(日任)「遠征」成功 10 回',
+            desc: '本日中「遠征」成功 10 回',
+          },
+        },
+      ] as any,
+      {},
+      inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[403]).toMatchObject({
+      status: 'not_applicable',
+      structuralFeasibility: 'not_applicable',
+      origin: 'none',
+    })
+  })
+
   test('keeps unsupported when a quest hints at inventory conditions but cannot be parsed safely', () => {
     const analysisMap = buildQuestAnalysisMap(
       [
@@ -943,6 +991,55 @@ describe('analyzeQuestRequirement', () => {
       status: 'unsupported',
       structuralFeasibility: 'unsupported',
       origin: 'none',
+    })
+  })
+
+  test('uses curated Bm7 rule so flagship destroyer counts inside the total 4 destroyers requirement', () => {
+    const bm7Inventory = {
+      ...inventory,
+      ships: [
+        ...inventory.ships,
+        {
+          id: '31',
+          shipId: 31,
+          name: '神通改二',
+          shipType: 3,
+          shipClass: 16,
+          compatibleNames: ['神通', '神通改', '神通改二'],
+          remodelRank: 2,
+        },
+        {
+          id: '32',
+          shipId: 32,
+          name: '羽黒改二',
+          shipType: 5,
+          shipClass: 8,
+          compatibleNames: ['羽黒', '羽黒改', '羽黒改二'],
+          remodelRank: 2,
+        },
+      ],
+    }
+
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 266,
+          docQuest: {
+            code: 'Bm7',
+            name: '(月常)「水上反擊部隊」突入',
+            desc: '派出重巡 1 艘 + 輕巡 1 艘 + 驅逐艦 4 艘及以驅逐艦為旗艦組成的水上挺身部隊，出擊 2-5，需要擊破 BOSS 及 S 勝',
+          },
+        },
+      ] as any,
+      QUEST_REQUIREMENTS,
+      bm7Inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[266]).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
+      origin: 'curated',
     })
   })
 
