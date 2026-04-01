@@ -1,6 +1,8 @@
 import {
+  getPoiInventoryAvailability,
   hasInventoryDependenciesChanged,
   normalizeInventory,
+  normalizePoiInventory,
 } from '../poi/inventory'
 
 describe('normalizeInventory', () => {
@@ -52,6 +54,42 @@ describe('normalizeInventory', () => {
       { id: '200', equipmentId: 10, name: '25mm単装機銃', type2: 21 },
       { id: '201', equipmentId: 11, name: '12.7cm連装砲', type2: 1 },
     ])
+  })
+})
+
+describe('normalizePoiInventory', () => {
+  test('marks ship and equipment availability when poi state has both runtime and master refs', () => {
+    const inventory = normalizePoiInventory({
+      info: {
+        ships: {},
+        equips: {},
+      },
+      const: {
+        $ships: {},
+        $equips: {},
+      },
+    })
+
+    expect(inventory.availability).toEqual({
+      ships: true,
+      equipments: true,
+    })
+  })
+
+  test('keeps missing availability false when poi state has not loaded a part yet', () => {
+    expect(
+      getPoiInventoryAvailability({
+        info: {
+          ships: {},
+        },
+        const: {
+          $ships: {},
+        },
+      }),
+    ).toEqual({
+      ships: true,
+      equipments: false,
+    })
   })
 })
 

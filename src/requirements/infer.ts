@@ -28,7 +28,6 @@ const INVENTORY_SIGNAL_PATTERNS = [
   /僚艦/u,
   /随伴艦/u,
   /隨伴艦/u,
-  /編成/u,
   /含む/u,
   /包含/u,
   /含有/u,

@@ -9,6 +9,7 @@
 
 ### Patch Changes
 
+- Switch quest requirement analysis to Poi live inventory first, keep imported CSV as per-part fallback, and formalize the maintenance notes for source boundaries and local persistence.
 - Restore quest-chain inferred completion/locked heuristics as first-class main-UI states so completed and blocked quests stop degrading into overly conservative unknown/plausible states. The layered export fields remain unchanged for downstream consumers.
 - Add a runtime quest overlay layer so newly discovered quests can be patched in locally without editing the generated `build/*` data pipeline.
 - Include raw in-game quest API snapshots in exported analysis JSON so new quest `api_no` values can be collected before upstream data sources update.

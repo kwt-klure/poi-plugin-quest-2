@@ -11,7 +11,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Bd3",
       "gameId": 210,
-      "name": "击破 10 回敌舰队！",
+      "name": "击破10回敌舰队！",
     },
     {
       "code": "Bd4",
@@ -56,12 +56,12 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Dd1",
       "gameId": 402,
-      "name": "「远征」3 次成功！",
+      "name": "「远征」3次成功！",
     },
     {
       "code": "Dd2",
       "gameId": 403,
-      "name": "「远征」10 次成功！",
+      "name": "「远征」10次成功！",
     },
     {
       "code": "Ed1",
@@ -168,7 +168,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Cm2",
       "gameId": 318,
-      "name": "给粮舰 “伊良湖” 的支援",
+      "name": "给粮舰“伊良湖”的支援",
     },
     {
       "code": "Dm1",
@@ -178,7 +178,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fm1",
       "gameId": 626,
-      "name": "精锐 “舰战” 队新编成",
+      "name": "精锐“舰战”队新编成",
     },
     {
       "code": "Fm2",
@@ -188,14 +188,14 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fm3",
       "gameId": 645,
-      "name": "“洋上补给” 物资的调拨",
+      "name": "“洋上补给”物资的调拨",
     },
   ],
   "quarterlyQuest": [
     {
       "code": "Bq11",
       "gameId": 284,
-      "name": "南西诸岛方面 “海上警备行动” 发令！",
+      "name": "南西诸岛方面“海上警备行动”发令！",
     },
     {
       "code": "Cq1",
@@ -235,7 +235,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fq2",
       "gameId": 643,
-      "name": "主力 “陆攻” 的采购",
+      "name": "主力“陆攻”的采购",
     },
     {
       "code": "Fq9",
@@ -265,7 +265,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fq7",
       "gameId": 686,
-      "name": "战时改修 A 型高角炮的量产",
+      "name": "战时改修A型高角炮的量产",
     },
     {
       "code": "Fq8",
@@ -285,7 +285,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Bq2",
       "gameId": 854,
-      "name": "战果扩张任务！「Z 作战」前段作战",
+      "name": "战果扩张任务！「Z作战」前段作战",
     },
     {
       "code": "Bq3",
@@ -300,7 +300,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Bq10",
       "gameId": 872,
-      "name": "战果扩张任务！“Z 作战” 后段作战",
+      "name": "战果扩张任务！“Z作战”后段作战",
     },
     {
       "code": "Bq5",
@@ -353,7 +353,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Bw4",
       "gameId": 221,
-      "name": "ろ (Ro) 号作战",
+      "name": "ろ(Ro)号作战",
     },
     {
       "code": "Bw5",
@@ -403,7 +403,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Dw3",
       "gameId": 411,
-      "name": "继续实施往南方的鼠輸送！",
+      "name": "继续实施往南方的鼠輸送!",
     },
     {
       "code": "Fw1",
@@ -480,12 +480,12 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Cy10",
       "gameId": 362,
-      "name": "特型初代 “第十一驱逐队” 演习 special！",
+      "name": "特型初代“第十一驱逐队”演习special！",
     },
     {
       "code": "Cy11",
       "gameId": 368,
-      "name": "“十六驱” 演习！",
+      "name": "“十六驱”演习！",
     },
     {
       "code": "Cy12",
@@ -495,7 +495,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Cy13",
       "gameId": 372,
-      "name": "实施水上舰 “舰队防空演习”！",
+      "name": "实施水上舰“舰队防空演习”！",
     },
     {
       "code": "Cy14",
@@ -505,7 +505,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Cy15",
       "gameId": 375,
-      "name": "“第三战队” 第二小队，演习开始！",
+      "name": "“第三战队”第二小队，演习开始！",
     },
     {
       "code": "Cy16",
@@ -635,7 +635,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "By9",
       "gameId": 947,
-      "name": "AL 作战",
+      "name": "AL作战",
     },
     {
       "code": "By10",
@@ -655,7 +655,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "By13",
       "gameId": 1005,
-      "name": "精强 “第七驱逐队” 紧急出动！",
+      "name": "精强“第七驱逐队”紧急出动！",
     },
     {
       "code": "By14",
@@ -665,7 +665,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "By15",
       "gameId": 1018,
-      "name": "“第三战队” 第二小队，前往铁底海峡！",
+      "name": "“第三战队”第二小队，前往铁底海峡！",
     },
     {
       "code": "Fy5",
@@ -680,7 +680,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fy7",
       "gameId": 1105,
-      "name": "夏日格纳库整备 & 航空基地整备",
+      "name": "夏日格纳库整备&航空基地整备",
     },
     {
       "code": "Fy8",
@@ -700,7 +700,7 @@ exports[`should questCategory correct snapshot 1`] = `
     {
       "code": "Fy11",
       "gameId": 1138,
-      "name": "【高射装置量产】94 式高射装置的追加配备",
+      "name": "【高射装置量产】94式高射装置的追加配备",
     },
   ],
 }

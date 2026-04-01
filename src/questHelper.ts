@@ -4,6 +4,12 @@ import prePostQuest from '../build/prePostQuest.json'
 import questCategory from '../build/questCategory.json'
 import questCodeMap from '../build/questCodeMap.json'
 import { GameQuest, QUEST_API_STATE } from './poi/types'
+import {
+  mergeNewQuestIds,
+  mergePrePostQuest,
+  mergeQuestCategory,
+  mergeQuestCodeMap,
+} from './questOverrides'
 
 export type DocQuest = {
   /**
@@ -43,13 +49,20 @@ export type UnionQuest = {
   docQuest: DocQuest
 }
 
-const dailyQuest = new Set(questCategory.dailyQuest)
-const weeklyQuest = new Set(questCategory.weeklyQuest)
-const monthlyQuest = new Set(questCategory.monthlyQuest)
-const quarterlyQuest = new Set(questCategory.quarterlyQuest)
-const yearlyQuest = new Set(questCategory.yearlyQuest)
-const singleQuest = new Set(questCategory.singleQuest)
-const newQuest = new Set(newQuestData.map((gameId) => +gameId))
+const mergedQuestCategory = mergeQuestCategory(questCategory)
+const mergedNewQuestData = mergeNewQuestIds(
+  Array.isArray(newQuestData) ? newQuestData : Object.keys(newQuestData),
+)
+const mergedPrePostQuest = mergePrePostQuest(prePostQuest)
+const mergedQuestCodeMap = mergeQuestCodeMap(questCodeMap)
+
+const dailyQuest = new Set(mergedQuestCategory.dailyQuest)
+const weeklyQuest = new Set(mergedQuestCategory.weeklyQuest)
+const monthlyQuest = new Set(mergedQuestCategory.monthlyQuest)
+const quarterlyQuest = new Set(mergedQuestCategory.quarterlyQuest)
+const yearlyQuest = new Set(mergedQuestCategory.yearlyQuest)
+const singleQuest = new Set(mergedQuestCategory.singleQuest)
+const newQuest = new Set(mergedNewQuestData.map((gameId) => +gameId))
 
 export const isInProgressQuest = (quest: GameQuest) =>
   quest.api_state === QUEST_API_STATE.IN_PROGRESS ||
@@ -67,9 +80,9 @@ export const isYearlyQuest = (quest: UnionQuest) =>
 export const isSingleQuest = (quest: UnionQuest) =>
   singleQuest.has(quest.gameId)
 
-export const hasNewQuest = newQuestData.length > 0
+export const hasNewQuest = mergedNewQuestData.length > 0
 export const isNewQuest = (quest: UnionQuest) => newQuest.has(quest.gameId)
-export const newQuestNumber = newQuestData.length
+export const newQuestNumber = mergedNewQuestData.length
 
 export enum QUEST_CATEGORY {
   Composition = '1',
@@ -206,15 +219,15 @@ export const isUnknownCategoryQuest = ({ code }: DocQuest) =>
   /^[^ABCDEFG]/.test(code)
 
 export const getQuestPrePost = (gameId: number) => {
-  if (!(gameId in prePostQuest)) {
+  if (!(gameId in mergedPrePostQuest)) {
     return { pre: [], post: [] }
   }
-  return prePostQuest[String(gameId) as keyof typeof prePostQuest]
+  return mergedPrePostQuest[String(gameId) as keyof typeof mergedPrePostQuest]
 }
 
 const getNoPostQuestIds = (): number[] => {
   const noPostQuestIds = []
-  for (const [gameId, { post }] of Object.entries(prePostQuest)) {
+  for (const [gameId, { post }] of Object.entries(mergedPrePostQuest)) {
     if (!post.length) {
       noPostQuestIds.push(+gameId)
     }
@@ -231,14 +244,16 @@ const getNoPostQuestIds = (): number[] => {
  * ```
  */
 export const getQuestIdByCode = (code: string) => {
-  if (code in questCodeMap) {
-    return questCodeMap[code as keyof typeof questCodeMap]
+  if (code in mergedQuestCodeMap) {
+    return mergedQuestCodeMap[code as keyof typeof mergedQuestCodeMap]
   }
   return null
 }
 
 export const getQuestCodeByGameId = (gameId: number) => {
-  const questCode = Object.entries(questCodeMap).find(([, id]) => id === gameId)
+  const questCode = Object.entries(mergedQuestCodeMap).find(
+    ([, id]) => id === gameId,
+  )
   if (!questCode) {
     return null
   }

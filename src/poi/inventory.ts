@@ -1,11 +1,23 @@
 import { useEffect, useState } from 'react'
-import type { InventorySnapshot } from '../analysis'
+import type {
+  InventoryAvailability,
+  InventorySnapshot,
+  RequirementInventory,
+} from '../analysis'
 import type { PoiState } from './types'
 import { observePoiStore } from './store'
 
-const emptyInventory: InventorySnapshot = {
+export type PoiInventorySnapshot = RequirementInventory & {
+  availability: InventoryAvailability
+}
+
+const emptyInventory: PoiInventorySnapshot = {
   ships: [],
   equipments: [],
+  availability: {
+    ships: false,
+    equipments: false,
+  },
 }
 
 type InventoryStateSlice = {
@@ -142,8 +154,22 @@ export const normalizeInventory = (state: InventoryStateSlice): InventorySnapsho
   }
 }
 
+export const getPoiInventoryAvailability = (
+  state: InventoryStateSlice,
+): InventoryAvailability => ({
+  ships: state.info?.ships != null && state.const?.$ships != null,
+  equipments: state.info?.equips != null && state.const?.$equips != null,
+})
+
+export const normalizePoiInventory = (
+  state: InventoryStateSlice,
+): PoiInventorySnapshot => ({
+  ...normalizeInventory(state),
+  availability: getPoiInventoryAvailability(state),
+})
+
 export const usePoiInventory = () => {
-  const [inventory, setInventory] = useState<InventorySnapshot>(emptyInventory)
+  const [inventory, setInventory] = useState<PoiInventorySnapshot>(emptyInventory)
 
   useEffect(() => {
     let previousRefs: InventoryDependencyRefs | null = null
@@ -159,7 +185,7 @@ export const usePoiInventory = () => {
       }
       previousRefs = nextRefs
 
-      setInventory(normalizeInventory(slice))
+      setInventory(normalizePoiInventory(slice))
     }
 
     return observePoiStore(listener)

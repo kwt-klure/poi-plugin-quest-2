@@ -31,6 +31,15 @@ export interface InventorySnapshot {
   equipments: OwnedEquipment[]
 }
 
+export interface InventoryAvailability {
+  ships: boolean
+  equipments: boolean
+}
+
+export interface RequirementInventory extends InventorySnapshot {
+  availability?: InventoryAvailability
+}
+
 export type QuestStructuralFeasibility =
   | 'ready'
   | 'missing_ships'
@@ -403,6 +412,31 @@ const resolveQuestLiveState = (questStatus: QUEST_STATUS): QuestLiveState => {
   }
 }
 
+const hasImportedInventoryMeta = (
+  inventory: RequirementInventory | ImportedInventoryState,
+): inventory is ImportedInventoryState =>
+  'shipCsv' in inventory && 'equipmentCsv' in inventory
+
+const resolveInventoryAvailability = (
+  inventory: RequirementInventory | ImportedInventoryState,
+): InventoryAvailability => {
+  if ('availability' in inventory && inventory.availability) {
+    return inventory.availability
+  }
+
+  if (hasImportedInventoryMeta(inventory)) {
+    return {
+      ships: Boolean(inventory.shipCsv),
+      equipments: Boolean(inventory.equipmentCsv),
+    }
+  }
+
+  return {
+    ships: true,
+    equipments: true,
+  }
+}
+
 const resolvePlanningStatus = ({
   acceptability,
   completionState,
@@ -436,16 +470,17 @@ const resolvePlanningStatus = ({
 
 const evaluateRequirement = (
   requirement: QuestRequirementBase,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
 ): RequirementEvaluation => {
   const requiresShips = hasRequirementConditions(requirement)
   const requiresEquipments = Boolean(requirement.equipments?.length)
   const missingInventoryParts: Array<'ships' | 'equipments'> = []
+  const availability = resolveInventoryAvailability(inventory)
 
-  if (requiresShips && 'shipCsv' in inventory && !inventory.shipCsv) {
+  if (requiresShips && !availability.ships) {
     missingInventoryParts.push('ships')
   }
-  if (requiresEquipments && 'equipmentCsv' in inventory && !inventory.equipmentCsv) {
+  if (requiresEquipments && !availability.equipments) {
     missingInventoryParts.push('equipments')
   }
 
@@ -504,7 +539,7 @@ const pickClosestAlternative = (
 
 const resolveRequirementEvaluation = (
   requirement: QuestRequirement,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
 ): {
   evaluation: RequirementEvaluation
   debugRequirement: QuestRequirementBase
@@ -559,7 +594,7 @@ const resolveRequirementEvaluation = (
 export const analyzeQuestRequirement = (
   gameId: number,
   requirement: QuestRequirement | null | undefined,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
   questStatus: QUEST_STATUS = QUEST_STATUS.UNKNOWN,
   origin: QuestAnalysisOrigin = 'curated',
 ): QuestAnalysis => {
@@ -607,7 +642,7 @@ export const analyzeQuestRequirement = (
 export const debugQuestRequirement = (
   gameId: number,
   requirement: QuestRequirement | null | undefined,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
   questStatus: QUEST_STATUS = QUEST_STATUS.UNKNOWN,
   origin: QuestAnalysisOrigin = 'curated',
 ): QuestAnalysisDebug => {
@@ -689,7 +724,7 @@ const buildStaticQuestAnalysis = (
 export const buildQuestAnalysisMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
   questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysis> =>
   Object.fromEntries(
@@ -769,7 +804,7 @@ export const buildActionableQuestFilter =
 export const buildQuestAnalysisDebugMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
-  inventory: InventorySnapshot | ImportedInventoryState,
+  inventory: RequirementInventory | ImportedInventoryState,
   questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysisDebug> =>
   Object.fromEntries(

@@ -970,6 +970,54 @@ describe('analyzeQuestRequirement', () => {
     })
   })
 
+  test('treats route-progress sortie quests without specific roster conditions such as Bm5 as not_applicable', () => {
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 264,
+          docQuest: {
+            code: 'Bm5',
+            name: '(月常) 水雷戦隊，南西海域防衛線に反復出撃！',
+            desc: '以水雷戰隊編成反覆出擊南西群島海域，確保船團航路安全。',
+          },
+        },
+      ] as any,
+      {},
+      inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[264]).toMatchObject({
+      status: 'not_applicable',
+      structuralFeasibility: 'not_applicable',
+      origin: 'none',
+    })
+  })
+
+  test('treats anti-sub patrol progress quests such as Bw10 as not_applicable', () => {
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 244,
+          docQuest: {
+            code: 'Bw10',
+            name: '(週常) 努力確保海上輸送的安全',
+            desc: '反覆在鎮守府近海(1-5)實施反潛巡邏，擊敗敵軍主力艦隊3次(A勝以上)，確保安全的海上輸送線。',
+          },
+        },
+      ] as any,
+      {},
+      inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[244]).toMatchObject({
+      status: 'not_applicable',
+      structuralFeasibility: 'not_applicable',
+      origin: 'none',
+    })
+  })
+
   test('keeps unsupported when a quest hints at inventory conditions but cannot be parsed safely', () => {
     const analysisMap = buildQuestAnalysisMap(
       [
