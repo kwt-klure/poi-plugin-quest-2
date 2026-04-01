@@ -12,6 +12,8 @@ assets/
 storybook-static/
 coverage/
 build/dutySprites/
+build/vendor/*.map
+*.map
 *.tgz
 
 # Other

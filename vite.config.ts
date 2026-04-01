@@ -18,6 +18,6 @@ export default defineConfig({
     },
     minify: false,
     outDir: 'build/vendor',
-    sourcemap: true,
+    sourcemap: false,
   },
 })
