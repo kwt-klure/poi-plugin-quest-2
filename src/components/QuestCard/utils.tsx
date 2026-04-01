@@ -124,6 +124,18 @@ export const getQuestAnalysisSummary = (
   }
 }
 
+const ACTIONABLE_CAVEAT_NOTE_PATTERNS = [/^僅檢查/u, /^未檢查/u]
+
+export const getQuestAnalysisVisibleNotes = (analysis: QuestAnalysis) => {
+  if (analysis.status !== 'actionable') {
+    return analysis.notes
+  }
+
+  return analysis.notes.filter(
+    (note) => !ACTIONABLE_CAVEAT_NOTE_PATTERNS.some((pattern) => pattern.test(note)),
+  )
+}
+
 export const getQuestAnalysisPrimaryDetail = (
   analysis: QuestAnalysis,
   t: (key: string, options?: Record<string, unknown>) => string,
@@ -148,8 +160,6 @@ export const getQuestAnalysisPrimaryDetail = (
             : t('Inventory Missing Detail Equipments')
       }
       return t('Quest Blocked Detail')
-    case 'not_applicable':
-      return t('Not Applicable Detail')
     case 'unsupported':
       return t('Requirement Unsupported Detail')
     default:

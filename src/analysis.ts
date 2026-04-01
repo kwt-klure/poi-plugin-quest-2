@@ -460,7 +460,7 @@ const resolvePlanningStatus = ({
     return 'actionable'
   }
   if (structuralFeasibility === 'not_applicable') {
-    return 'not_applicable'
+    return 'actionable'
   }
   if (structuralFeasibility === 'unsupported') {
     return 'unsupported'

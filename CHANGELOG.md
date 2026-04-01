@@ -9,7 +9,9 @@
 
 ### Patch Changes
 
-- Switch quest requirement analysis to Poi live inventory first, keep imported CSV as per-part fallback, and formalize the maintenance notes for source boundaries and local persistence.
+- Treat simple progress-only quests with no specific roster/equipment constraints as directly actionable in the main UI, and suppress low-value actionable caveat text so cards like `Bm7`, `Dd2`, and `Ed1` read more cleanly.
+- Add a curated `Bm3` requirement rule so light-cruiser flagship wording no longer degrades into a fake missing literal ship name.
+- Revert quest requirement analysis back to uploaded-CSV-only inventory input. The plugin no longer reads Poi live inventory, because that integration proved too risky for Poi stability.
 - Restore quest-chain inferred completion/locked heuristics as first-class main-UI states so completed and blocked quests stop degrading into overly conservative unknown/plausible states. The layered export fields remain unchanged for downstream consumers.
 - Add a runtime quest overlay layer so newly discovered quests can be patched in locally without editing the generated `build/*` data pipeline.
 - Include raw in-game quest API snapshots in exported analysis JSON so new quest `api_no` values can be collected before upstream data sources update.

@@ -898,7 +898,7 @@ describe('analyzeQuestRequirement', () => {
     })
   })
 
-  test('returns not_applicable for pure progress quests such as Bw7', () => {
+  test('treats pure progress quests such as Bw7 as actionable when available', () => {
     const analysisMap = buildQuestAnalysisMap(
       [
         {
@@ -916,7 +916,7 @@ describe('analyzeQuestRequirement', () => {
     )
 
     expect(analysisMap[241]).toMatchObject({
-      status: 'not_applicable',
+      status: 'actionable',
       structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
@@ -940,7 +940,7 @@ describe('analyzeQuestRequirement', () => {
     )
 
     expect(analysisMap[226]).toMatchObject({
-      status: 'not_applicable',
+      status: 'actionable',
       structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
@@ -964,7 +964,7 @@ describe('analyzeQuestRequirement', () => {
     )
 
     expect(analysisMap[403]).toMatchObject({
-      status: 'not_applicable',
+      status: 'actionable',
       structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
@@ -988,7 +988,7 @@ describe('analyzeQuestRequirement', () => {
     )
 
     expect(analysisMap[264]).toMatchObject({
-      status: 'not_applicable',
+      status: 'actionable',
       structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
@@ -1012,7 +1012,7 @@ describe('analyzeQuestRequirement', () => {
     )
 
     expect(analysisMap[244]).toMatchObject({
-      status: 'not_applicable',
+      status: 'actionable',
       structuralFeasibility: 'not_applicable',
       origin: 'none',
     })
@@ -1089,6 +1089,47 @@ describe('analyzeQuestRequirement', () => {
       structuralFeasibility: 'ready',
       origin: 'curated',
     })
+  })
+
+  test('uses curated Bm3 rule so light-cruiser flagship wording no longer becomes a fake literal ship-name deficit', () => {
+    const bm3Inventory = {
+      ...inventory,
+      ships: [
+        ...inventory.ships,
+        {
+          id: '33',
+          shipId: 33,
+          name: '川内改二',
+          shipType: 3,
+          shipClass: 16,
+          compatibleNames: ['川內', '川内', '川内改', '川内改二'],
+          remodelRank: 2,
+        },
+      ],
+    }
+
+    const analysisMap = buildQuestAnalysisMap(
+      [
+        {
+          gameId: 257,
+          docQuest: {
+            code: 'Bm3',
+            name: '(月任)「水雷戦隊」前往南西',
+            desc: '緊急派遣以輕巡為旗艦的水雷戰隊（輕巡最大 3 艘，其他為驅逐艦），消滅 1-4 的敵人，需要擊破 BOSS 以及 S 勝',
+          },
+        },
+      ] as any,
+      QUEST_REQUIREMENTS,
+      bm3Inventory,
+      availableQuestStatus,
+    )
+
+    expect(analysisMap[257]).toMatchObject({
+      status: 'actionable',
+      structuralFeasibility: 'ready',
+      origin: 'curated',
+    })
+    expect(analysisMap[257].missingShips).toEqual([])
   })
 
   test('returns unsupported when requirement is missing', () => {

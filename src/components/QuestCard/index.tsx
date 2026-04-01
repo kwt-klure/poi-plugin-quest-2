@@ -32,6 +32,7 @@ import {
   getQuestAnalysisPrimaryDetail,
   getQuestAnalysisSecondarySummary,
   getQuestAnalysisSummary,
+  getQuestAnalysisVisibleNotes,
   questIconMap,
   questStatusMap,
 } from './utils'
@@ -88,6 +89,7 @@ export const QuestCard = forwardRef<
   const TailIcon = questStatusMap[status]
   const highlightWords = useHighlightWords()
   const { t } = usePluginTranslation()
+  const visibleAnalysisNotes = analysis ? getQuestAnalysisVisibleNotes(analysis) : []
 
   return (
     <FlexCard
@@ -172,7 +174,7 @@ export const QuestCard = forwardRef<
                 )}
               </>
             )}
-            {analysis.notes.map((note) => (
+            {visibleAnalysisNotes.map((note) => (
               <AnalysisText key={note}>{note}</AnalysisText>
             ))}
           </AnalysisBlock>
