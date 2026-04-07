@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-kc-quest-audit",
-  "version": "0.17.7",
+  "version": "0.17.8",
   "private": false,
   "description": "Poi plugin for KanColle quest auditing with inventory-based requirement comparison",
   "license": "MIT",

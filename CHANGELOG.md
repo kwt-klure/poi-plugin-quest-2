@@ -9,6 +9,7 @@
 
 ### Patch Changes
 
+- Update upstream `kcQuests` generated quest data to `9ceb602aaede9faca8102115ba1edcbe9f8866f4`.
 - Stop generating and packaging `build/vendor/*.map` files so npm releases no longer leak vendor source maps.
 - Treat simple progress-only quests with no specific roster/equipment constraints as directly actionable in the main UI, and suppress low-value actionable caveat text so cards like `Bm7`, `Dd2`, and `Ed1` read more cleanly.
 - Add a curated `Bm3` requirement rule so light-cruiser flagship wording no longer degrades into a fake missing literal ship name.
