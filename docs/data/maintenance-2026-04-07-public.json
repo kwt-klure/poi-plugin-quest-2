@@ -1,0 +1,158 @@
+{
+  "updatedAt": "2026-04-08",
+  "sourceStatus": {
+    "kcQuestsCaughtUp": false,
+    "kcanotifyCaughtUp": false,
+    "notes": [
+      "This file tracks public maintenance information before apiNo / gameId is confirmed.",
+      "Do not import this file into runtime code.",
+      "Cs3 is already present in upstream generated data and does not require a local runtime overlay."
+    ]
+  },
+  "quests": {
+    "2026-04-07-spring-sortie-1": {
+      "draftKey": "2026-04-07-spring-sortie-1",
+      "code": null,
+      "name": {
+        "ja": "【春限定】春の近海哨戒お散歩！2026",
+        "zh-Hans": "【春限定】春天的近海巡逻散步！2026"
+      },
+      "conditions": {
+        "ja": "【春限定】旗艦に潜水母艦・練習巡洋艦・駆逐艦のいずれか、他に駆逐艦・海防艦・潜水艦を配備した計5隻以下の哨戒部隊で、南西諸島沖、製油所地帯沿岸、南西諸島近海、バシー海峡の春哨戒を実施せよ！",
+        "zh-Hans": "【春限定】以旗舰为潜水母舰／练习巡洋舰／驱逐舰之一，僚舰为驱逐舰／海防舰／潜水舰且总计5艘以下的巡逻部队，在南西群岛近海、炼油厂地带沿岸、南西诸岛近海、巴士海峡进行春天巡逻！"
+      },
+      "rewards": [
+        "三選一：三式水中探信儀★+2 x1 / 改修資材 x2 / 開発資材 x5",
+        "三選一：勲章 x1 / 給糧艦「伊良湖」x2 / 特製家具職人 x1"
+      ],
+      "knownPrerequisites": [],
+      "sources": [
+        "https://zh.kcwiki.cn/wiki/任务/最新任务",
+        "https://wikiwiki.jp/kancolle/任務"
+      ],
+      "notes": [
+        "Public latest-quest page does not expose a confirmed quest code or apiNo/gameId for this entry.",
+        "Public note: 1-2, 1-3, 2-1, 2-2 boss once each with ? rank."
+      ],
+      "apiNo": null,
+      "gameId": null,
+      "overlayReady": false
+    },
+    "2026-04-07-spring-sortie-2": {
+      "draftKey": "2026-04-07-spring-sortie-2",
+      "code": null,
+      "name": {
+        "ja": "【春限定】続：春のお散歩哨戒です！",
+        "zh-Hans": "【春限定】续：是春天的散步巡逻！"
+      },
+      "conditions": {
+        "ja": null,
+        "zh-Hans": "【春限定】由「吹雪」「夕云」「卯月」「村雨」「天津风」「迅鲸」「长鲸」之中作为旗舰及二号舰所率领的春天出门队，反复巡逻东部奥廖尔海、冲之岛海、北方阿留申海域！完成春天的散步吧！"
+      },
+      "rewards": [
+        "三選一：高速修復材 x5 / 新型噴進装備開発資材 x2 / 開発資材 x10",
+        "三選一：装備保有枠 +3 / 補強増設 x1 / 航空特別増加食 x3"
+      ],
+      "knownPrerequisites": [],
+      "sources": [
+        "https://zh.kcwiki.cn/wiki/任务/最新任务",
+        "https://wikiwiki.jp/kancolle/任務"
+      ],
+      "notes": [
+        "The Chinese latest-quest page exposes the public description, but the Japanese description field is currently blank there.",
+        "Public note: include two ships from 吹雪 / 夕雲 / 卯月 / 村雨 / 天津風 / 迅鯨 / 長鯨 / 平安丸 as flagship and second ship, then clear 2-3, 2-5, 3-5 boss twice each with ? rank."
+      ],
+      "apiNo": null,
+      "gameId": null,
+      "overlayReady": false
+    },
+    "2026-04-07-first-strike-1": {
+      "draftKey": "2026-04-07-first-strike-1",
+      "code": null,
+      "name": {
+        "ja": "【第一遊撃部隊任務】出撃準備を実施せよ！",
+        "zh-Hans": null
+      },
+      "conditions": {
+        "ja": null,
+        "zh-Hans": "以大和作为第一舰队旗舰、矢矧作为二号舰，并从「矶风、滨风、雪风、冬月、凉月、霞、初霜、朝霜」中选择4名舰娘作为伴随舰，废弃15.2cm单装炮4个，并准备好开发资材300个和燃料500。"
+      },
+      "rewards": [
+        "三選一：開発資材 x320 / 新型兵装資材 x4 / 試製甲板用カタパルト x1",
+        "三選一：応急修理女神 x2 / 補強増設 x2 / 改装設計図 x1"
+      ],
+      "knownPrerequisites": [
+        "【春限定】春の近海哨戒お散歩！2026"
+      ],
+      "sources": [
+        "https://zh.kcwiki.cn/wiki/任务/最新任务"
+      ],
+      "notes": [
+        "Public latest-quest page links the first spring sortie task as the prerequisite column entry.",
+        "Public latest-quest page does not expose a confirmed quest code or apiNo/gameId for this entry."
+      ],
+      "apiNo": null,
+      "gameId": null,
+      "overlayReady": false
+    },
+    "2026-04-07-first-strike-2": {
+      "draftKey": "2026-04-07-first-strike-2",
+      "code": null,
+      "name": {
+        "ja": "【第一遊撃部隊任務】南西諸島防衛戦に出撃！",
+        "zh-Hans": null
+      },
+      "conditions": {
+        "ja": null,
+        "zh-Hans": "以大和作为第一舰队旗舰、矢矧作为二号舰，并从二水战驱逐舰中选择4名舰娘作为伴随舰的舰队，出击1-4、2-1、2-2、2-5击破Boss，各取得2次S胜。"
+      },
+      "rewards": [
+        "三選一：開発資材 x36 / 勲章 x3 / 戦闘詳報 x1",
+        "三選一：新型兵装資材 x6 / 15m二重測距儀改+21号電探改二+熟練射撃指揮所★+2 x1 / 試製甲板用カタパルト x2"
+      ],
+      "knownPrerequisites": [],
+      "sources": [
+        "https://zh.kcwiki.cn/wiki/任务/最新任务",
+        "https://kankorekore.2-d.jp/"
+      ],
+      "notes": [
+        "Public latest-quest page does not expose a confirmed quest code or apiNo/gameId for this entry.",
+        "Public route note: 1-4, 2-1, 2-2, 2-5 boss twice each with S rank."
+      ],
+      "apiNo": null,
+      "gameId": null,
+      "overlayReady": false
+    },
+    "Cs3": {
+      "draftKey": "Cs3",
+      "code": "Cs3",
+      "name": {
+        "ja": "春季大演習",
+        "zh-Hans": "春季大演习"
+      },
+      "conditions": {
+        "ja": "春季大演習：春の一日中に「演習」で8回以上「勝利」をおさめ、艦隊の練度向上に努めよ！",
+        "zh-Hans": "在春季的一天之内取得8次以上「演习」的胜利，进一步提高舰队的水平！"
+      },
+      "rewards": [
+        "給糧艦「間宮」x1",
+        "プレゼント箱 x1"
+      ],
+      "knownPrerequisites": [
+        "C1",
+        "B6"
+      ],
+      "sources": [
+        "https://wikiwiki.jp/kancolle/任務",
+        "https://zh.kcwiki.cn/wiki/任务/最新任务"
+      ],
+      "notes": [
+        "This entry is already present in upstream generated data.",
+        "gameId 315 is already confirmed through the existing questCodeMap, so no local runtime overlay is needed for this task."
+      ],
+      "apiNo": 315,
+      "gameId": 315,
+      "overlayReady": false
+    }
+  }
+}
