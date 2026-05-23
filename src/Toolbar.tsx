@@ -9,7 +9,11 @@ import {
 } from './filter-sphere'
 import { buildActionableQuestFilter } from './analysis'
 import { usePluginTranslation } from './poi/hooks'
-import { QUEST_STATUS, UnionQuest } from './questHelper'
+import {
+  buildAcceptableQuestFilter,
+  QUEST_STATUS,
+  UnionQuest,
+} from './questHelper'
 import { SettingsMain } from './Settings'
 import { PROGRESS_TAG, useQuest, useQuestAnalysisMap } from './store'
 import {
@@ -152,7 +156,7 @@ const useToolbarFilter = (): ((quest: UnionQuest) => boolean) => {
   const questStatusQuery = useGlobalQuestStatusQuery()
 
   const progressTagFilter = useCallback(
-      (quest: UnionQuest): boolean => {
+    (quest: UnionQuest): boolean => {
       const questStatus = questStatusQuery(quest.gameId)
       switch (progressTag) {
         case PROGRESS_TAG.All:
@@ -183,9 +187,11 @@ const useToolbarFilter = (): ((quest: UnionQuest) => boolean) => {
 
   const typeTagsFilter = Or(
     ...TYPE_TAGS.filter((tag) => typeTags[tag.name]).map((tag) =>
-      tag.name === 'Actionable'
-        ? buildActionableQuestFilter(analysisMap)
-        : tag.filter,
+      tag.name === 'Acceptable'
+        ? buildAcceptableQuestFilter(questStatusQuery)
+        : tag.name === 'Actionable'
+          ? buildActionableQuestFilter(analysisMap)
+          : tag.filter,
     ),
   )
   const categoryTagsFilter = Or(

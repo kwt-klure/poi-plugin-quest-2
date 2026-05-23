@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-kc-quest-audit",
-  "version": "0.17.8",
+  "version": "0.18.9",
   "private": false,
   "description": "Poi plugin for KanColle quest auditing with inventory-based requirement comparison",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "inventory"
   ],
   "files": [
+    ".babelrc.json",
     "src/App.tsx",
     "src/analysis.ts",
     "src/components",
@@ -26,6 +27,7 @@
     "src/patch.ts",
     "src/poi",
     "src/questHelper.ts",
+    "src/rawQuestSnapshot.ts",
     "src/questOverrides",
     "src/reducer.ts",
     "src/requirements",
@@ -36,9 +38,11 @@
     "src/utils.ts",
     "build",
     "i18n",
+    "shims",
     "package.json",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "tsconfig.json"
   ],
   "main": "src/index.ts",
   "scripts": {
@@ -62,6 +66,10 @@
     "release": "npm run build && changeset publish"
   },
   "dependencies": {
+    "@blueprintjs/core": "^5.7.2",
+    "@blueprintjs/icons": "^5.7.2",
+    "@blueprintjs/select": "^5.1.2",
+    "@fn-sphere/filter": "^1.3.0",
     "moize": "^6.1.6",
     "react-highlight-words": "^0.20.0",
     "react-use": "^17.5.1",
@@ -76,12 +84,9 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-react": "^7.22.15",
     "@babel/preset-typescript": "^7.23.2",
-    "@blueprintjs/core": "^5.7.2",
     "@blueprintjs/popover2": "^2.1.2",
-    "@blueprintjs/select": "^5.1.2",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.7",
-    "@fn-sphere/filter": "^1.3.0",
     "@storybook/addon-actions": "^7.5.2",
     "@storybook/addon-essentials": "^7.5.2",
     "@storybook/addon-links": "^7.5.2",

@@ -55,6 +55,7 @@ export const initialState = {
   }>,
   activePresetId: null as string | null,
   showFilterBuilder: true,
+  autoExportRawQuestSnapshot: true,
   importedInventory: emptyImportedInventoryState,
 }
 

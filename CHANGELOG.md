@@ -6,9 +6,19 @@
 
 - Redefine quest analysis `status` as a planner-facing state model so completed, inferred-completed, locked, and unknown quests no longer collapse into `ready`.
 - Add explicit `structuralFeasibility`, `acceptability`, and `completionState` layers to exported quest analysis JSON and switch the primary UI/filter wording from `Requirement Ready` to `Actionable`.
+- Add an independent raw quest snapshot export so account-visible questlist API observations can be saved separately from inventory-based quest analysis.
 
 ### Patch Changes
 
+- Add a `Can accept` toolbar filter based on observed in-game quest state, and include observed new quests that are not yet in the generated quest data.
+- Add a lower-friction raw quest snapshot archive export with underscore filenames, explicit empty-tab observations, and separate tab/page coverage metadata.
+- Fall back raw quest snapshot exports to `local-fallback/poi-inventory-exports` when the external archive lane is unavailable.
+- Treat local `archive/` shadow directories as unavailable and block empty raw snapshot exports before they write misleading JSON files.
+- Treat the All quest tab as the complete raw listing source; category tabs are no longer required for complete coverage.
+- Auto-export complete All-tab raw quest snapshots to the active export lane, with a Settings toggle and quest-clear invalidation to avoid stale current-state files.
+- Update upstream generated quest text/data to `kcanotify-gamedata` `2026050202` and `kcQuests` `1e986e57611fcab7217dfc806a508c35de81e87f`.
+- Declare Blueprint, Blueprint Select, and filter-sphere packages as runtime dependencies so clean Poi installs can enable the plugin without relying on stale hoisted packages.
+- Make plugin load-time hooks tolerate unavailable Poi state while enabling, instead of surfacing an unhandled reducer patch error.
 - Update upstream `kcQuests` generated quest data to `9ceb602aaede9faca8102115ba1edcbe9f8866f4`.
 - Stop generating and packaging `build/vendor/*.map` files so npm releases no longer leak vendor source maps.
 - Treat simple progress-only quests with no specific roster/equipment constraints as directly actionable in the main UI, and suppress low-value actionable caveat text so cards like `Bm7`, `Dd2`, and `Ed1` read more cleanly.

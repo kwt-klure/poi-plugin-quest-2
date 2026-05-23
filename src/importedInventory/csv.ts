@@ -56,7 +56,10 @@ const REMODEL_SUFFIXES = [
   '改',
 ] as const
 
-const REMODEL_RANK_BY_SUFFIX: Record<(typeof REMODEL_SUFFIXES)[number], number> = {
+const REMODEL_RANK_BY_SUFFIX: Record<
+  (typeof REMODEL_SUFFIXES)[number],
+  number
+> = {
   改: 1,
   改二: 2,
   改二甲: 2,
@@ -144,11 +147,16 @@ const parseCsvRecords = (text: string): CsvRecord[] => {
   }
 
   const headers = rows[0].map((header) => header.trim())
-  return rows.slice(1).map((row) =>
-    Object.fromEntries(
-      headers.map((header, index) => [header, String(row[index] ?? '').trim()]),
-    ),
-  )
+  return rows
+    .slice(1)
+    .map((row) =>
+      Object.fromEntries(
+        headers.map((header, index) => [
+          header,
+          String(row[index] ?? '').trim(),
+        ]),
+      ),
+    )
 }
 
 const assertRecords = (records: CsvRecord[], kind: string) => {
@@ -184,7 +192,8 @@ const getRecordValue = (record: CsvRecord, headers: string[]) => {
   return header ? normalizeCell(record[header]) : ''
 }
 
-const toShipTypeId = (shipTypeName: string) => SHIP_TYPE_NAME_TO_ID[shipTypeName] ?? -1
+const toShipTypeId = (shipTypeName: string) =>
+  SHIP_TYPE_NAME_TO_ID[shipTypeName] ?? -1
 
 const getRemodelRankBySuffix = (name: string) => {
   const matchedSuffix = REMODEL_SUFFIXES.find((suffix) => name.endsWith(suffix))
@@ -253,7 +262,9 @@ const buildCompatibleProfile = (
     names.add(current)
     buildSuffixCompatibleNames(current).forEach((entry) => names.add(entry))
     ;(REMODEL_ALIASES[current] ?? []).forEach((entry) => names.add(entry))
-    ;(predecessorMap[current] ?? []).forEach((predecessor) => queue.push(predecessor))
+    ;(predecessorMap[current] ?? []).forEach((predecessor) =>
+      queue.push(predecessor),
+    )
   }
 
   const remodelRankMemo: Record<string, number> = {}
@@ -264,7 +275,9 @@ const buildCompatibleProfile = (
 
     const predecessorRank = Math.max(
       0,
-      ...(predecessorMap[current] ?? []).map((predecessor) => buildRemodelRank(predecessor) + 1),
+      ...(predecessorMap[current] ?? []).map(
+        (predecessor) => buildRemodelRank(predecessor) + 1,
+      ),
     )
     const rank = Math.max(getRemodelRankBySuffix(current), predecessorRank)
     remodelRankMemo[current] = rank
@@ -319,13 +332,18 @@ const parseLegacyShipRecords = (records: CsvRecord[]): OwnedShip[] =>
         return null
       }
 
-      const shipIdValue = getRecordValue(record, [...SHIP_MASTER_ID_HEADERS, ...SHIP_INSTANCE_ID_HEADERS])
+      const shipIdValue = getRecordValue(record, [
+        ...SHIP_MASTER_ID_HEADERS,
+        ...SHIP_INSTANCE_ID_HEADERS,
+      ])
       const shipId = Number(shipIdValue || index + 1)
       const shipClassValue = getRecordValue(record, SHIP_CLASS_HEADERS)
       const { compatibleNames, remodelRank } = buildCompatibleProfile(name)
 
       return {
-        id: String(getRecordValue(record, SHIP_INSTANCE_ID_HEADERS) || index + 1),
+        id: String(
+          getRecordValue(record, SHIP_INSTANCE_ID_HEADERS) || index + 1,
+        ),
         shipId: Number.isFinite(shipId) ? shipId : index + 1,
         name,
         shipType: toShipTypeId(getRecordValue(record, SHIP_TYPE_HEADERS)),
@@ -349,8 +367,12 @@ const parseExternalShipRecords = (records: CsvRecord[]): OwnedShip[] => {
         return null
       }
 
-      const instanceId = getRecordValue(record, SHIP_INSTANCE_ID_HEADERS) || String(index + 1)
-      const shipIdValue = getRecordValue(record, [...SHIP_MASTER_ID_HEADERS, ...SHIP_INSTANCE_ID_HEADERS])
+      const instanceId =
+        getRecordValue(record, SHIP_INSTANCE_ID_HEADERS) || String(index + 1)
+      const shipIdValue = getRecordValue(record, [
+        ...SHIP_MASTER_ID_HEADERS,
+        ...SHIP_INSTANCE_ID_HEADERS,
+      ])
       const shipId = Number(shipIdValue || index + 1)
       const shipClassValue = getRecordValue(record, SHIP_CLASS_HEADERS)
       const { compatibleNames, remodelRank } = buildCompatibleProfile(
@@ -382,11 +404,15 @@ const parseEquipmentRecords = (records: CsvRecord[]): OwnedEquipment[] =>
         return null
       }
 
-      const equipmentId = Number(getRecordValue(record, EQUIPMENT_ID_HEADERS) || index + 1)
+      const equipmentId = Number(
+        getRecordValue(record, EQUIPMENT_ID_HEADERS) || index + 1,
+      )
       const type2 = Number(getRecordValue(record, EQUIPMENT_TYPE_HEADERS) || -1)
 
       return {
-        id: String(getRecordValue(record, EQUIPMENT_INSTANCE_ID_HEADERS) || index + 1),
+        id: String(
+          getRecordValue(record, EQUIPMENT_INSTANCE_ID_HEADERS) || index + 1,
+        ),
         equipmentId: Number.isFinite(equipmentId) ? equipmentId : index + 1,
         name,
         type2: Number.isFinite(type2) ? type2 : -1,
@@ -417,7 +443,8 @@ export const parseEquipmentCsvImport = (text: string): ParsedEquipmentCsv => {
   }
 }
 
-export const parseShipCsv = (text: string): OwnedShip[] => parseShipCsvImport(text).ships
+export const parseShipCsv = (text: string): OwnedShip[] =>
+  parseShipCsvImport(text).ships
 
 export const parseEquipmentCsv = (text: string): OwnedEquipment[] =>
   parseEquipmentCsvImport(text).equipments

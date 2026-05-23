@@ -1,13 +1,19 @@
 import { useMemo } from 'react'
 import { QUEST_DATA } from '../../build'
 import { usePluginTranslation } from '../poi/hooks'
+import { mergeQuestMap } from '../questOverrides'
 import {
   DocQuest,
+  getCategory,
   getQuestIdByCode,
   QUEST_STATUS,
   UnionQuest,
 } from '../questHelper'
-import { useGlobalGameQuest, useGlobalQuestStatusQuery } from './gameQuest'
+import {
+  useGlobalGameQuest,
+  useGlobalObservedGameQuest,
+  useGlobalQuestStatusQuery,
+} from './gameQuest'
 import { DataSource, useStore } from './store'
 
 const useLanguage = () => {
@@ -33,45 +39,62 @@ export const useDataSource = () => {
   return { dataSource: normalizedDataSource, setDataSource }
 }
 
+export const buildUnionQuests = (
+  docQuestMap: Record<string, DocQuest>,
+  gameQuest: ReturnType<typeof useGlobalGameQuest>,
+  observedGameQuest: ReturnType<typeof useGlobalObservedGameQuest>,
+): UnionQuest[] => {
+  const currentGameQuestMap = new Map(
+    gameQuest.map((quest) => [quest.api_no, quest]),
+  )
+  const observedGameQuestMap = new Map(
+    observedGameQuest.map((quest) => [quest.api_no, quest]),
+  )
+
+  const knownQuests = Object.entries(docQuestMap).map(([gameId, val]) => {
+    const parsedGameId = Number(gameId)
+    return {
+      gameId: parsedGameId,
+      gameQuest:
+        currentGameQuestMap.get(parsedGameId) ??
+        observedGameQuestMap.get(parsedGameId),
+      docQuest: val,
+    }
+  })
+
+  const unknownObservedQuests = Array.from(observedGameQuestMap.values())
+    .filter((quest) => !(String(quest.api_no) in docQuestMap))
+    .sort((left, right) => left.api_no - right.api_no)
+    .map((quest) => ({
+      gameId: quest.api_no,
+      gameQuest: quest,
+      docQuest: {
+        code: `${getCategory(quest.api_category).wikiSymbol}?`,
+        name: quest.api_title,
+        desc: quest.api_detail,
+      },
+    }))
+
+  return [...knownQuests, ...unknownObservedQuests]
+}
+
 const useQuestMap = (): Record<string, DocQuest> => {
   const { dataSource } = useDataSource()
   if (!QUEST_DATA.length) {
     throw new Error('QUEST_DATA is empty')
   }
-  const data = QUEST_DATA.find((i) => i.key === dataSource)
-  if (!data) {
-    return QUEST_DATA[0].res
-  }
-  return data.res
+  const data = QUEST_DATA.find((i) => i.key === dataSource) ?? QUEST_DATA[0]
+  return useMemo(() => mergeQuestMap(data.res, data.key), [data.key, data.res])
 }
 
 export const useQuest = (): UnionQuest[] => {
   const docQuestMap = useQuestMap()
   const gameQuest = useGlobalGameQuest()
-  // TODO extract new quest from game quest
-  // Not yet recorded quest
-  // May be a new quest
-  // if (!(gameId in docQuestMap)) {
-  //   return {
-  //     gameId,
-  //     gameQuest: quest,
-  //     docQuest: {
-  //       code: `${getCategory(quest.api_category).wikiSymbol}?`,
-  //       name: quest.api_title,
-  //       desc: quest.api_detail,
-  //     },
-  //   }
-  // }
-  // Return all recorded quests
+  const observedGameQuest = useGlobalObservedGameQuest()
+
   return useMemo(
-    () =>
-      Object.entries(docQuestMap).map(([gameId, val]) => ({
-        gameId: +gameId,
-        // Maybe empty
-        gameQuest: gameQuest.find((quest) => quest.api_no === Number(gameId)),
-        docQuest: val,
-      })),
-    [docQuestMap, gameQuest],
+    () => buildUnionQuests(docQuestMap, gameQuest, observedGameQuest),
+    [docQuestMap, gameQuest, observedGameQuest],
   )
 }
 

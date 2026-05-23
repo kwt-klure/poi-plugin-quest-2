@@ -74,7 +74,7 @@ export const QuestList = ({ quests }: { quests: UnionQuest[] }) => {
       if (rowRef.current) {
         setRowHeight(index, rowRef.current.clientHeight)
       }
-    }, [analysis, code, desc, index, memo2, name, rewards, setRowHeight])
+    }, [analysis, code, desc, index, memo2, name, rewards])
 
     return (
       <div style={style}>

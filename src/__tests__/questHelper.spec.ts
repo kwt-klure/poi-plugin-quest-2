@@ -1,10 +1,13 @@
 import {
+  buildAcceptableQuestFilter,
   calcQuestMap,
   getCompletedQuest,
   getLockedQuest,
   getPostQuestIds,
   getPreQuestIds,
   getQuestCodeByGameId,
+  isQuestAcceptableStatus,
+  QUEST_STATUS,
 } from '../questHelper'
 
 describe('questHelper', () => {
@@ -43,5 +46,30 @@ describe('questHelper', () => {
 
   test('should 196 getLockedQuest correct', () => {
     expect(getLockedQuest([196])).toMatchSnapshot()
+  })
+
+  test('treats only visible unaccepted quests as acceptable', () => {
+    expect(isQuestAcceptableStatus(QUEST_STATUS.DEFAULT)).toBe(true)
+    expect(isQuestAcceptableStatus(QUEST_STATUS.IN_PROGRESS)).toBe(false)
+    expect(isQuestAcceptableStatus(QUEST_STATUS.COMPLETED)).toBe(false)
+    expect(isQuestAcceptableStatus(QUEST_STATUS.LOCKED)).toBe(false)
+    expect(isQuestAcceptableStatus(QUEST_STATUS.ALREADY_COMPLETED)).toBe(false)
+    expect(isQuestAcceptableStatus(QUEST_STATUS.UNKNOWN)).toBe(false)
+  })
+
+  test('builds a quest filter that keeps only acceptable quests', () => {
+    const acceptableFilter = buildAcceptableQuestFilter((gameId) =>
+      gameId === 101 ? QUEST_STATUS.DEFAULT : QUEST_STATUS.IN_PROGRESS,
+    )
+
+    expect(
+      [101, 202]
+        .map((gameId) => ({
+          gameId,
+          docQuest: { code: `A${gameId}`, name: '', desc: '' },
+        }))
+        .filter(acceptableFilter)
+        .map((quest) => quest.gameId),
+    ).toEqual([101])
   })
 })

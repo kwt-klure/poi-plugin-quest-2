@@ -1,4 +1,5 @@
 import type { PluginState } from '../reducer'
+import type { RawQuestTabObservedAction } from '../rawQuestSnapshot'
 
 export enum QUEST_API_STATE {
   DEFAULT = 1,
@@ -73,12 +74,13 @@ export enum QuestTab {
   OTHERS = '5',
 }
 
-type QuestListAction = {
+export type QuestListAction = {
   type: '@@Response/kcsapi/api_get_member/questlist'
   path: '/kcsapi/api_get_member/questlist'
   postBody: {
-    api_verno: '1'
+    api_verno?: '1'
     api_tab_id: QuestTab
+    [key: string]: unknown
   }
   body: {
     api_completed_kind: number
@@ -87,8 +89,22 @@ type QuestListAction = {
     // In progress count
     api_exec_count: number
     api_exec_type: number
+    api_page_no?: string | number
+    api_disp_page?: string | number
+    api_page_count?: string | number
     api_list: GameQuest[]
+    [key: string]: unknown
   }
+}
+
+export type QuestClearItemGetAction = {
+  type: '@@Response/kcsapi/api_req_quest/clearitemget'
+  path: '/kcsapi/api_req_quest/clearitemget'
+  postBody?: {
+    api_quest_id?: string | number
+    [key: string]: unknown
+  }
+  body?: unknown
 }
 
 type OtherAction = {
@@ -98,7 +114,11 @@ type OtherAction = {
   body?: unknown
 }
 
-export type PoiAction = QuestListAction | OtherAction
+export type PoiAction =
+  | QuestListAction
+  | QuestClearItemGetAction
+  | RawQuestTabObservedAction
+  | OtherAction
 
 export type PoiState = {
   ui: {
@@ -152,6 +172,7 @@ export type PoiState = {
 export type Store<S> = {
   getState: () => S
   subscribe: (listener: () => void) => () => void
+  dispatch?: (action: { type: string; [key: string]: unknown }) => unknown
 }
 
 // state.info.quests.activeQuests

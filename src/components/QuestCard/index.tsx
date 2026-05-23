@@ -89,7 +89,9 @@ export const QuestCard = forwardRef<
   const TailIcon = questStatusMap[status]
   const highlightWords = useHighlightWords()
   const { t } = usePluginTranslation()
-  const visibleAnalysisNotes = analysis ? getQuestAnalysisVisibleNotes(analysis) : []
+  const visibleAnalysisNotes = analysis
+    ? getQuestAnalysisVisibleNotes(analysis)
+    : []
 
   return (
     <FlexCard
@@ -135,7 +137,10 @@ export const QuestCard = forwardRef<
         {analysis && (
           <AnalysisBlock>
             <AnalysisList>
-              <Tag intent={getQuestAnalysisIntent(analysis.status)} minimal={true}>
+              <Tag
+                intent={getQuestAnalysisIntent(analysis.status)}
+                minimal={true}
+              >
                 {getQuestAnalysisSummary(analysis, t)}
               </Tag>
               {getQuestAnalysisSecondarySummary(analysis, t) ? (
@@ -164,12 +169,14 @@ export const QuestCard = forwardRef<
               <>
                 {analysis.missingShips.length > 0 && (
                   <AnalysisText>
-                    <b>{t('Missing Ships')}</b>: {analysis.missingShips.join('、')}
+                    <b>{t('Missing Ships')}</b>:{' '}
+                    {analysis.missingShips.join('、')}
                   </AnalysisText>
                 )}
                 {analysis.missingEquipments.length > 0 && (
                   <AnalysisText>
-                    <b>{t('Missing Equipments')}</b>: {analysis.missingEquipments.join('、')}
+                    <b>{t('Missing Equipments')}</b>:{' '}
+                    {analysis.missingEquipments.join('、')}
                   </AnalysisText>
                 )}
               </>
