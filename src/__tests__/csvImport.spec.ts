@@ -88,10 +88,7 @@ describe('CSV inventory import', () => {
   })
 
   test('marks localized ship CSV as legacy format', () => {
-    const csv = [
-      '艦種,等級,艦名,艦 ID',
-      '駆逐艦,55,電改,1',
-    ].join('\n')
+    const csv = ['艦種,等級,艦名,艦 ID', '駆逐艦,55,電改,1'].join('\n')
 
     expect(parseShipCsvImport(csv).format).toBe('legacy_localized_csv')
   })

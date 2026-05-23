@@ -4,7 +4,7 @@ import newQuestData from '../../build/kcQuestsData/quests-scn-new.json'
 describe('should version correct', () => {
   test('should KcwikiQuestData Game data version correct', () => {
     expect(version).toMatchInlineSnapshot(
-      `"d5501ea4d1329df41ca74f9e84c8b8ea264e0092"`,
+      `"1e986e57611fcab7217dfc806a508c35de81e87f"`,
     )
   })
 })
@@ -26,5 +26,18 @@ describe('should format correct', () => {
       // gameId should be number
       expect(gameId).toEqual(String(gameId))
     })
+  })
+
+  test('quest codes are unique', () => {
+    const codeMap = new Map<string, string>()
+    Object.entries(kcwikiGameData.res).forEach(([gameId, quest]) => {
+      const previousGameId = codeMap.get(quest.code)
+      expect(previousGameId).toBeUndefined()
+      codeMap.set(quest.code, gameId)
+    })
+  })
+
+  test('Fubuki Kai San yearly sortie keeps the corrected quest code', () => {
+    expect(kcwikiGameData.res[1045].code).toBe('By16')
   })
 })

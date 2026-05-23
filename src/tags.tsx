@@ -6,6 +6,7 @@ import { usePluginTranslation } from './poi/hooks'
 import type { GameQuest } from './poi/types'
 import type { UnionQuest } from './questHelper'
 import {
+  buildAcceptableQuestFilter,
   hasNewQuest,
   isArsenalQuest,
   isCompositionQuest,
@@ -28,7 +29,11 @@ import {
 import { ALL_CATEGORY_TAG, ALL_TYPE_TAG, PROGRESS_TAG } from './store'
 import { useQuest, useQuestAnalysisMap } from './store'
 import { useFilterProgressTag, useFilterTags } from './store/filterTags'
-import { useGlobalGameQuest, useGlobalQuestStatusNum } from './store/gameQuest'
+import {
+  useGlobalGameQuest,
+  useGlobalQuestStatusNum,
+  useGlobalQuestStatusQuery,
+} from './store/gameQuest'
 
 const withDocQuest =
   <T,>(filterFn: (q: UnionQuest['docQuest']) => T) =>
@@ -61,6 +66,10 @@ export const TYPE_TAGS = [
   {
     name: 'In Progress',
     filter: withGameQuestOr(isInProgressQuest, false),
+  },
+  {
+    name: 'Acceptable',
+    filter: () => false,
   },
   {
     name: 'Actionable',
@@ -169,6 +178,7 @@ export const TypeTags = () => {
   const gameQuests = useGlobalGameQuest()
   const quests = useQuest()
   const analysisMap = useQuestAnalysisMap()
+  const questStatusQuery = useGlobalQuestStatusQuery()
   const { progressTag } = useFilterProgressTag()
 
   const inProgressQuest = gameQuests.filter((gameQuest) =>
@@ -176,6 +186,9 @@ export const TypeTags = () => {
   )
   const actionableQuestCount = quests.filter((quest) =>
     isQuestActionable(analysisMap[quest.gameId]),
+  ).length
+  const acceptableQuestCount = quests.filter(
+    buildAcceptableQuestFilter(questStatusQuery),
   ).length
   const { typeTags, setTypeTags } = useFilterTags()
 
@@ -205,6 +218,14 @@ export const TypeTags = () => {
       </Tag>
 
       <Tag
+        intent={typeTags['Acceptable'] ? 'success' : 'none'}
+        interactive={true}
+        onClick={() => setTypeTags('Acceptable')}
+      >
+        {t('Acceptable Filter', { number: acceptableQuestCount })}
+      </Tag>
+
+      <Tag
         intent={typeTags['Actionable'] ? 'success' : 'none'}
         interactive={true}
         onClick={() => setTypeTags('Actionable')}
@@ -222,7 +243,7 @@ export const TypeTags = () => {
         </Tag>
       )}
 
-      {TYPE_TAGS.slice(4).map((tag) => (
+      {TYPE_TAGS.slice(5).map((tag) => (
         <Tag
           onClick={() => setTypeTags(tag.name)}
           intent={typeTags[tag.name] ? 'primary' : 'none'}

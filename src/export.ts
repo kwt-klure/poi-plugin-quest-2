@@ -79,12 +79,14 @@ export const buildQuestExportPayload = ({
     observedQuestList,
     activeQuestMap,
     unknownObservedQuests: observedQuestList.filter(
-      (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+      (quest) =>
+        !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
     ),
     unknownActiveQuests: Object.values(activeQuestMap)
       .map((item) => item.detail)
       .filter(
-        (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+        (quest) =>
+          !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
       ),
   },
   quests: quests.map((quest) => ({
@@ -100,8 +102,7 @@ export const buildQuestExportPayload = ({
       structuralFeasibility:
         analysisMap[quest.gameId]?.structuralFeasibility ?? 'unsupported',
       acceptability: analysisMap[quest.gameId]?.acceptability ?? 'unknown',
-      completionState:
-        analysisMap[quest.gameId]?.completionState ?? 'unknown',
+      completionState: analysisMap[quest.gameId]?.completionState ?? 'unknown',
       origin: analysisMap[quest.gameId]?.origin ?? 'none',
       missingShips: analysisMap[quest.gameId]?.missingShips ?? [],
       missingEquipments: analysisMap[quest.gameId]?.missingEquipments ?? [],

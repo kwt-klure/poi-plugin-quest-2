@@ -13,9 +13,20 @@ export const QUEST_REQUIREMENTS: Record<number, QuestRequirement> = {
   },
   175: {
     positions: {
-      flagship: [{ label: '旗艦：朝潮改二 / 朝潮改二丁', names: ['朝潮改二', '朝潮改二丁'] }],
+      flagship: [
+        {
+          label: '旗艦：朝潮改二 / 朝潮改二丁',
+          names: ['朝潮改二', '朝潮改二丁'],
+        },
+      ],
     },
-    ships: [{ label: '滿潮 / 大潮 / 荒潮 3 艘', names: ['満潮', '大潮', '荒潮'], count: 3 }],
+    ships: [
+      {
+        label: '滿潮 / 大潮 / 荒潮 3 艘',
+        names: ['満潮', '大潮', '荒潮'],
+        count: 3,
+      },
+    ],
     notes: ['旗艦條件接受朝潮改二與朝潮改二丁。'],
   },
   185: {
@@ -67,29 +78,57 @@ export const QUEST_REQUIREMENTS: Record<number, QuestRequirement> = {
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   337: {
-    ships: [{ label: '第十八驅逐隊 4 艘', group: 'dai18_destroyer_division', count: 4 }],
+    ships: [
+      {
+        label: '第十八驅逐隊 4 艘',
+        group: 'dai18_destroyer_division',
+        count: 4,
+      },
+    ],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   339: {
-    ships: [{ label: '第十九驅逐隊 4 艘', group: 'dai19_destroyer_division', count: 4 }],
+    ships: [
+      {
+        label: '第十九驅逐隊 4 艘',
+        group: 'dai19_destroyer_division',
+        count: 4,
+      },
+    ],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   342: {
     shipTypes: [
       { label: '驅逐 / 海防 3 艘', shipTypes: [1, 2], count: 3 },
-      { label: '驅逐 / 海防 / 輕巡級 4 艘', shipTypes: [1, 2, 3, 4, 21], count: 4 },
+      {
+        label: '驅逐 / 海防 / 輕巡級 4 艘',
+        shipTypes: [1, 2, 3, 4, 21],
+        count: 4,
+      },
     ],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   362: {
-    ships: [{ label: '第十一驅逐隊 4 艘', group: 'dai11_destroyer_division', count: 4 }],
+    ships: [
+      {
+        label: '第十一驅逐隊 4 艘',
+        group: 'dai11_destroyer_division',
+        count: 4,
+      },
+    ],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   371: {
     positions: {
       flagship: [{ label: '旗艦：春雨', names: ['春雨'] }],
     },
-    ships: [{ label: '白露型僚艦 3 艘', group: 'shiratsuyu_class_harusame_team', count: 3 }],
+    ships: [
+      {
+        label: '白露型僚艦 3 艘',
+        group: 'shiratsuyu_class_harusame_team',
+        count: 3,
+      },
+    ],
     notes: ['僅檢查持有艦娘與裝備，不檢查演習次數。'],
   },
   638: {
@@ -147,7 +186,11 @@ export const QUEST_REQUIREMENTS: Record<number, QuestRequirement> = {
     },
     ships: [
       { label: '由良改二', names: ['由良改二'], count: 1 },
-      { label: '睦月型 2 艘', group: 'mutsuki_class_6th_destroyer_escort', count: 2 },
+      {
+        label: '睦月型 2 艘',
+        group: 'mutsuki_class_6th_destroyer_escort',
+        count: 2,
+      },
     ],
     notes: ['僅檢查持有艦娘與裝備，不檢查出擊地圖與次數。'],
   },

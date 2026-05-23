@@ -416,3 +416,10 @@ export enum QUEST_STATUS {
   ALREADY_COMPLETED,
   UNKNOWN,
 }
+
+export const isQuestAcceptableStatus = (status: QUEST_STATUS) =>
+  status === QUEST_STATUS.DEFAULT
+
+export const buildAcceptableQuestFilter =
+  (questStatusQuery: (gameId: number) => QUEST_STATUS) => (quest: UnionQuest) =>
+    isQuestAcceptableStatus(questStatusQuery(quest.gameId))

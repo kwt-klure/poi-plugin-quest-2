@@ -17,6 +17,13 @@ const VERSION_URL =
 
 // maybe need ignore some expired quest
 const IGNORE_DATA = [] as const
+const DATA_FIXES: Record<string, { code?: string }> = {
+  // kcQuests 7955d578 publishes gameId 1045 as B16, colliding with gameId
+  // 227. kcanotify and the quest name identify it as the April yearly By16.
+  1045: {
+    code: 'By16',
+  },
+} as const
 
 const getRemoteVersion = async () => {
   const resp = await fetch(VERSION_URL)
@@ -88,7 +95,7 @@ const downloadQuestData = async () => {
   }
   for (const gameId in json) {
     const { code, name, desc, memo, memo2 } = json[gameId]
-    json[gameId].code = code.trim()
+    json[gameId].code = DATA_FIXES[gameId]?.code ?? code.trim()
     json[gameId].name = pangu.spacing(name)
     json[gameId].desc = pangu.spacing(desc)
     if (memo) {
