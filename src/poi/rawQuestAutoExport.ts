@@ -3,10 +3,12 @@ import {
   buildRawQuestSnapshotFileName,
   buildRawQuestSnapshotExportPayload,
   hasRawQuestSnapshotData,
+  RAW_QUEST_SNAPSHOT_FILE_PREFIX,
 } from '../rawQuestSnapshot'
 import type { RawQuestSnapshotExportPayload } from '../rawQuestSnapshot'
 import { getStorage } from '../store'
 import { noop } from '../utils'
+import { cleanupOldAutoExportFiles } from './autoExportCleanup'
 import { PACKAGE_NAME } from './env'
 import { resolvePoiInventoryExportDirectory } from './exportDirectory'
 import { getPoiStore } from './store'
@@ -18,6 +20,9 @@ let lastSeenAutoExportKey: string | null = null
 let pendingAutoExportKey: string | null = null
 let pendingAutoExportTimeout: ReturnType<typeof setTimeout> | null = null
 let unsubscribeRawQuestAutoExport: () => void = noop
+const emptyRawQuestPages = {}
+const emptyRawQuestTabObservations = {}
+const emptyActiveQuestMap = {}
 
 export const shouldAutoExportRawQuestSnapshot = (
   payload: RawQuestSnapshotExportPayload,
@@ -61,23 +66,59 @@ const clearPendingAutoExport = () => {
   pendingAutoExportTimeout = null
 }
 
-const buildRawQuestSnapshotPayloadFromPoiState = (state: PoiState) =>
-  buildRawQuestSnapshotExportPayload({
+export const selectRawQuestAutoExportState = (state: PoiState) => ({
+  rawQuestPages:
+    state?.ext?.[PACKAGE_NAME]?._?.rawQuestPages ?? emptyRawQuestPages,
+  rawQuestTabObservations:
+    state?.ext?.[PACKAGE_NAME]?._?.rawQuestTabObservations ??
+    emptyRawQuestTabObservations,
+  activeQuestMap: state?.info?.quests?.activeQuests ?? emptyActiveQuestMap,
+})
+
+const isSameRawQuestAutoExportState = (
+  previous: ReturnType<typeof selectRawQuestAutoExportState>,
+  next: ReturnType<typeof selectRawQuestAutoExportState>,
+) =>
+  previous.rawQuestPages === next.rawQuestPages &&
+  previous.rawQuestTabObservations === next.rawQuestTabObservations &&
+  previous.activeQuestMap === next.activeQuestMap
+
+export const createRawQuestAutoExportStateListener = (
+  onRelevantState: (state: PoiState) => void,
+) => {
+  let previousSelection: ReturnType<typeof selectRawQuestAutoExportState> | null =
+    null
+
+  return (state: PoiState) => {
+    const nextSelection = selectRawQuestAutoExportState(state)
+    if (
+      previousSelection &&
+      isSameRawQuestAutoExportState(previousSelection, nextSelection)
+    ) {
+      return
+    }
+
+    previousSelection = nextSelection
+    onRelevantState(state)
+  }
+}
+
+const buildRawQuestSnapshotPayloadFromPoiState = (state: PoiState) => {
+  const selection = selectRawQuestAutoExportState(state)
+  return buildRawQuestSnapshotExportPayload({
     pluginVersion: PKG.version,
-    rawQuestPages: state?.ext?.[PACKAGE_NAME]?._?.rawQuestPages ?? {},
-    rawQuestTabObservations:
-      state?.ext?.[PACKAGE_NAME]?._?.rawQuestTabObservations ?? {},
-    activeQuestMap: state?.info?.quests?.activeQuests ?? {},
+    rawQuestPages: selection.rawQuestPages,
+    rawQuestTabObservations: selection.rawQuestTabObservations,
+    activeQuestMap: selection.activeQuestMap,
   })
+}
 
 export const writeRawQuestSnapshotPayloadToExportLane = (
   payload: RawQuestSnapshotExportPayload,
 ) => {
   const remote = (globalThis as { remote?: any }).remote
   if (!remote?.require) {
-    throw new Error(
-      'Failed to auto-export raw quest snapshot! remote unavailable',
-    )
+    throw new Error('Failed to auto-export raw quest snapshot! remote unavailable')
   }
 
   const fs = remote.require('fs')
@@ -91,6 +132,17 @@ export const writeRawQuestSnapshotPayloadToExportLane = (
   fs.mkdirSync(targetDirectory, { recursive: true })
   const filePath = path.join(targetDirectory, buildRawQuestSnapshotFileName())
   fs.writeFileSync(filePath, JSON.stringify(payload, null, 2))
+  try {
+    cleanupOldAutoExportFiles({
+      fs,
+      path,
+      targetDirectory,
+      currentFilePath: filePath,
+      filePrefix: RAW_QUEST_SNAPSHOT_FILE_PREFIX,
+    })
+  } catch (error) {
+    console.warn('Failed to clean old raw quest snapshots', error)
+  }
   return filePath as string
 }
 
@@ -109,8 +161,9 @@ const queueAutoExport = (
   pendingAutoExportKey = key
   pendingAutoExportTimeout = setTimeout(() => {
     try {
-      writeRawQuestSnapshotPayloadToExportLane(payload)
+      const filePath = writeRawQuestSnapshotPayloadToExportLane(payload)
       lastSeenAutoExportKey = key
+      console.info('Auto-exported raw quest snapshot', filePath)
     } catch (error) {
       console.warn('Failed to auto-export raw quest snapshot', error)
     } finally {
@@ -153,10 +206,13 @@ export const startRawQuestSnapshotAutoExport = async () => {
   const store = await getPoiStore()
   unsubscribeRawQuestAutoExport()
   initializedRawQuestAutoExport = false
-  unsubscribeRawQuestAutoExport = store.subscribe(() =>
-    handleRawQuestAutoExportState(store.getState()),
+  const handleRelevantState = createRawQuestAutoExportStateListener(
+    handleRawQuestAutoExportState,
   )
-  handleRawQuestAutoExportState(store.getState())
+  unsubscribeRawQuestAutoExport = store.subscribe(() =>
+    handleRelevantState(store.getState()),
+  )
+  handleRelevantState(store.getState())
 }
 
 export const stopRawQuestSnapshotAutoExport = () => {

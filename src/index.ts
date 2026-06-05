@@ -8,6 +8,14 @@ import {
   startRawQuestSnapshotAutoExport,
   stopRawQuestSnapshotAutoExport,
 } from './poi/rawQuestAutoExport'
+import {
+  startLiveQuestProgressAutoExport,
+  stopLiveQuestProgressAutoExport,
+} from './poi/liveQuestProgressAutoExport'
+import {
+  startLiveQuestProgressTaskPanelBridge,
+  stopLiveQuestProgressTaskPanelBridge,
+} from './poi/liveQuestProgressTaskPanelBridge'
 
 export const windowMode = false
 
@@ -18,11 +26,19 @@ export const pluginDidLoad = () => {
   startRawQuestSnapshotAutoExport().catch((error) => {
     console.warn('Failed to start raw quest snapshot auto-export', error)
   })
+  startLiveQuestProgressAutoExport().catch((error) => {
+    console.warn('Failed to start live quest progress auto-export', error)
+  })
+  startLiveQuestProgressTaskPanelBridge().catch((error) => {
+    console.warn('Failed to start live quest progress task panel bridge', error)
+  })
 }
 
 export const pluginWillUnload = () => {
   clearPatchLegacyQuestPluginReducer()
   stopRawQuestSnapshotAutoExport()
+  stopLiveQuestProgressAutoExport()
+  stopLiveQuestProgressTaskPanelBridge()
 }
 
 export { App as reactClass } from './App'

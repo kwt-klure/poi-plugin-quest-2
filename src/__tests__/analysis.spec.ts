@@ -146,10 +146,7 @@ describe('analyzeQuestRequirement', () => {
 
     expect(
       [1, 2]
-        .map((gameId) => ({
-          gameId,
-          docQuest: { code: `A${gameId}`, name: '', desc: '' },
-        }))
+        .map((gameId) => ({ gameId, docQuest: { code: `A${gameId}`, name: '', desc: '' } }))
         .filter(actionableFilter)
         .map((quest) => quest.gameId),
     ).toEqual([1])
@@ -257,9 +254,7 @@ describe('analyzeQuestRequirement', () => {
       ships: [{ label: '大鯨', names: ['大鯨'], count: 1 }],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(1, requirement, renamedInventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(1, requirement, renamedInventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })
@@ -300,9 +295,7 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(1, requirement, remodeledInventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(1, requirement, remodeledInventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })
@@ -356,9 +349,7 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(1, requirement, mikawaInventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(1, requirement, mikawaInventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })
@@ -367,20 +358,9 @@ describe('analyzeQuestRequirement', () => {
   test('supports flagship-specific destroyer division quests such as A70', () => {
     const requirement: QuestRequirement = {
       positions: {
-        flagship: [
-          {
-            label: '旗艦：朝潮改二 / 朝潮改二丁',
-            names: ['朝潮改二', '朝潮改二丁'],
-          },
-        ],
+        flagship: [{ label: '旗艦：朝潮改二 / 朝潮改二丁', names: ['朝潮改二', '朝潮改二丁'] }],
       },
-      ships: [
-        {
-          label: '滿潮 / 大潮 / 荒潮 3 艘',
-          names: ['満潮', '大潮', '荒潮'],
-          count: 3,
-        },
-      ],
+      ships: [{ label: '滿潮 / 大潮 / 荒潮 3 艘', names: ['満潮', '大潮', '荒潮'], count: 3 }],
     }
 
     const dai8Inventory = {
@@ -425,9 +405,7 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(175, requirement, dai8Inventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(175, requirement, dai8Inventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })
@@ -458,12 +436,7 @@ describe('analyzeQuestRequirement', () => {
           name: 'Saratoga Mk.II Mod.2',
           shipType: 11,
           shipClass: 83,
-          compatibleNames: [
-            'Saratoga',
-            'Saratoga改',
-            'Saratoga Mk.II',
-            'Saratoga Mk.II Mod.2',
-          ],
+          compatibleNames: ['Saratoga', 'Saratoga改', 'Saratoga Mk.II', 'Saratoga Mk.II Mod.2'],
           remodelRank: 3,
         },
         {
@@ -496,9 +469,7 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(185, requirement, taskForceInventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(185, requirement, taskForceInventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })
@@ -626,9 +597,7 @@ describe('analyzeQuestRequirement', () => {
       ],
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(1, requirement, rank1Inventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(1, requirement, rank1Inventory)).toMatchObject({
       status: 'blocked',
       structuralFeasibility: 'missing_ships',
       missingShips: ['第十九驅逐隊 4 艘（改二以上） x3'],
@@ -665,9 +634,7 @@ describe('analyzeQuestRequirement', () => {
       }),
     }
 
-    expect(
-      analyzeAvailableQuestRequirement(1, requirement, rank2Inventory),
-    ).toMatchObject({
+    expect(analyzeAvailableQuestRequirement(1, requirement, rank2Inventory)).toMatchObject({
       status: 'actionable',
       structuralFeasibility: 'ready',
     })

@@ -7,6 +7,8 @@
 - Redefine quest analysis `status` as a planner-facing state model so completed, inferred-completed, locked, and unknown quests no longer collapse into `ready`.
 - Add explicit `structuralFeasibility`, `acceptability`, and `completionState` layers to exported quest analysis JSON and switch the primary UI/filter wording from `Requirement Ready` to `Actionable`.
 - Add an independent raw quest snapshot export so account-visible questlist API observations can be saved separately from inventory-based quest analysis.
+- Add a plugin-local live sortie quest progress sidecar with KC Quest Audit card display, quest-analysis export metadata, and separate `kancolle_live_quest_progress_*.json` auto-exports.
+- Add an opt-in experimental bridge that mirrors plugin-local live quest progress into Poi's native task panel without overriding native Poi quest records.
 
 ### Patch Changes
 
@@ -16,6 +18,8 @@
 - Treat local `archive/` shadow directories as unavailable and block empty raw snapshot exports before they write misleading JSON files.
 - Treat the All quest tab as the complete raw listing source; category tabs are no longer required for complete coverage.
 - Auto-export complete All-tab raw quest snapshots to the active export lane, with a Settings toggle and quest-clear invalidation to avoid stale current-state files.
+- Keep only the latest auto-exported raw quest snapshot and live quest progress JSON per export lane prefix after successful writes.
+- Reduce Poi hot-path overhead by gating auto-export work to relevant state changes and only patching Poi `getState()` when the experimental task-panel bridge is enabled.
 - Update upstream generated quest text/data to `kcanotify-gamedata` `2026050202` and `kcQuests` `1e986e57611fcab7217dfc806a508c35de81e87f`.
 - Declare Blueprint, Blueprint Select, and filter-sphere packages as runtime dependencies so clean Poi installs can enable the plugin without relying on stale hoisted packages.
 - Make plugin load-time hooks tolerate unavailable Poi state while enabling, instead of surfacing an unhandled reducer patch error.

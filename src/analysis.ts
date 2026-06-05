@@ -195,9 +195,7 @@ const buildShipMatcher = (requirement: QuestRequirementBase): ShipMatcher[] => {
       count: shipRequirement.count ?? 1,
       match: (ship) =>
         ship.remodelRank >= (shipRequirement.minRemodelRank ?? 0) &&
-        names.some((requiredName) =>
-          ship.compatibleNames.includes(requiredName),
-        ),
+        names.some((requiredName) => ship.compatibleNames.includes(requiredName)),
     })
   })
 
@@ -213,8 +211,7 @@ const buildShipMatcher = (requirement: QuestRequirementBase): ShipMatcher[] => {
     matchers.push({
       label: shipClassRequirement.label,
       count: shipClassRequirement.count,
-      match: (ship) =>
-        shipClassRequirement.shipClasses.includes(ship.shipClass),
+      match: (ship) => shipClassRequirement.shipClasses.includes(ship.shipClass),
     })
   })
 
@@ -266,10 +263,7 @@ const buildEquipmentMatcherDebug = (
       label: equipmentRequirement.label,
       count: equipmentRequirement.count,
       matchedEquipments,
-      missing: Math.max(
-        0,
-        equipmentRequirement.count - matchedEquipments.length,
-      ),
+      missing: Math.max(0, equipmentRequirement.count - matchedEquipments.length),
     }
   })
 
@@ -279,18 +273,13 @@ const buildShipDeficits = (
 ): string[] =>
   buildShipMatcher(requirement)
     .map((matcher) => {
-      const matches = inventory.ships.filter((ship) =>
-        matcher.match(ship),
-      ).length
+      const matches = inventory.ships.filter((ship) => matcher.match(ship)).length
       const missing = Math.max(0, matcher.count - matches)
       return missing > 0 ? `${matcher.label} x${missing}` : null
     })
     .filter(Boolean) as string[]
 
-const canAssignShips = (
-  matchers: ShipMatcher[],
-  ships: OwnedShip[],
-): boolean => {
+const canAssignShips = (matchers: ShipMatcher[], ships: OwnedShip[]): boolean => {
   const slots = matchers.flatMap((matcher) =>
     Array.from({ length: matcher.count }, (_, index) => ({
       key: `${matcher.label}-${index}`,
@@ -347,8 +336,7 @@ const countMissingEntries = (entries: string[]) =>
 const getBaseRequirement = (
   requirement: QuestRequirement,
 ): QuestRequirementBase => {
-  const baseRequirement = { ...requirement }
-  delete baseRequirement.anyOf
+  const { anyOf: _anyOf, ...baseRequirement } = requirement
   return baseRequirement
 }
 
@@ -374,23 +362,14 @@ const mergeRequirementBranch = (
   branch: QuestRequirementBranch,
 ): QuestRequirementBase => ({
   ships: [...(baseRequirement.ships ?? []), ...(branch.ships ?? [])],
-  shipTypes: [
-    ...(baseRequirement.shipTypes ?? []),
-    ...(branch.shipTypes ?? []),
-  ],
+  shipTypes: [...(baseRequirement.shipTypes ?? []), ...(branch.shipTypes ?? [])],
   shipClasses: [
     ...(baseRequirement.shipClasses ?? []),
     ...(branch.shipClasses ?? []),
   ],
   positions: mergePositions(baseRequirement.positions, branch.positions),
-  equipments: [
-    ...(baseRequirement.equipments ?? []),
-    ...(branch.equipments ?? []),
-  ],
-  forbidden: [
-    ...(baseRequirement.forbidden ?? []),
-    ...(branch.forbidden ?? []),
-  ],
+  equipments: [...(baseRequirement.equipments ?? []), ...(branch.equipments ?? [])],
+  forbidden: [...(baseRequirement.forbidden ?? []), ...(branch.forbidden ?? [])],
   notes: [...(baseRequirement.notes ?? []), ...(branch.notes ?? [])],
 })
 
@@ -517,10 +496,7 @@ const evaluateRequirement = (
 
   const shipDeficits = buildShipDeficits(requirement, inventory)
   const equipmentDeficits = buildEquipmentDeficits(requirement, inventory)
-  const shipReady = canAssignShips(
-    buildShipMatcher(requirement),
-    inventory.ships,
-  )
+  const shipReady = canAssignShips(buildShipMatcher(requirement), inventory.ships)
   const equipmentReady = equipmentDeficits.length === 0
 
   if (!shipReady && shipDeficits.length === 0) {
@@ -690,10 +666,7 @@ export const debugQuestRequirement = (
     }
   }
 
-  const { debugRequirement } = resolveRequirementEvaluation(
-    requirement,
-    inventory,
-  )
+  const { debugRequirement } = resolveRequirementEvaluation(requirement, inventory)
 
   const shipMatchers = buildShipMatcher(debugRequirement).map((matcher) => {
     const matchedShips = inventory.ships
@@ -752,8 +725,7 @@ export const buildQuestAnalysisMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
   inventory: RequirementInventory | ImportedInventoryState,
-  questStatusQuery: (gameId: number) => QUEST_STATUS = () =>
-    QUEST_STATUS.UNKNOWN,
+  questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysis> =>
   Object.fromEntries(
     quests.map((quest) => {
@@ -789,11 +761,7 @@ export const buildQuestAnalysisMap = (
         case 'not_applicable':
           return [
             quest.gameId,
-            buildStaticQuestAnalysis(
-              quest.gameId,
-              'not_applicable',
-              questStatus,
-            ),
+            buildStaticQuestAnalysis(quest.gameId, 'not_applicable', questStatus),
           ]
         case 'unsupported':
         default:
@@ -825,8 +793,9 @@ export const summarizeQuestAnalysis = (
   return summary
 }
 
-export const isQuestActionable = (analysis: QuestAnalysis | null | undefined) =>
-  analysis?.status === 'actionable'
+export const isQuestActionable = (
+  analysis: QuestAnalysis | null | undefined,
+) => analysis?.status === 'actionable'
 
 export const buildActionableQuestFilter =
   (analysisMap: Record<number, QuestAnalysis>) => (quest: UnionQuest) =>
@@ -836,8 +805,7 @@ export const buildQuestAnalysisDebugMap = (
   quests: UnionQuest[],
   requirementMap: Record<number, QuestRequirement>,
   inventory: RequirementInventory | ImportedInventoryState,
-  questStatusQuery: (gameId: number) => QUEST_STATUS = () =>
-    QUEST_STATUS.UNKNOWN,
+  questStatusQuery: (gameId: number) => QUEST_STATUS = () => QUEST_STATUS.UNKNOWN,
 ): Record<number, QuestAnalysisDebug> =>
   Object.fromEntries(
     quests.map((quest) => {

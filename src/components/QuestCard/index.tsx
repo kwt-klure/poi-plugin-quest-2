@@ -11,6 +11,7 @@ import {
   guessQuestCategory,
 } from '../../questHelper'
 import { useQuestStatus } from '../../store/quest'
+import { useLiveQuestProgressRecord } from '../../store/liveQuestProgress'
 import { useHighlightWords } from '../../store/search'
 import { QuestTag } from '../QuestTag'
 import {
@@ -89,9 +90,14 @@ export const QuestCard = forwardRef<
   const TailIcon = questStatusMap[status]
   const highlightWords = useHighlightWords()
   const { t } = usePluginTranslation()
-  const visibleAnalysisNotes = analysis
-    ? getQuestAnalysisVisibleNotes(analysis)
-    : []
+  const visibleAnalysisNotes = analysis ? getQuestAnalysisVisibleNotes(analysis) : []
+  const liveProgress = useLiveQuestProgressRecord(gameId)
+  const liveProgressIntent =
+    liveProgress?.summary.status === 'complete'
+      ? 'success'
+      : liveProgress?.summary.status === 'in_progress'
+        ? 'primary'
+        : 'none'
 
   return (
     <FlexCard
@@ -137,10 +143,7 @@ export const QuestCard = forwardRef<
         {analysis && (
           <AnalysisBlock>
             <AnalysisList>
-              <Tag
-                intent={getQuestAnalysisIntent(analysis.status)}
-                minimal={true}
-              >
+              <Tag intent={getQuestAnalysisIntent(analysis.status)} minimal={true}>
                 {getQuestAnalysisSummary(analysis, t)}
               </Tag>
               {getQuestAnalysisSecondarySummary(analysis, t) ? (
@@ -169,14 +172,12 @@ export const QuestCard = forwardRef<
               <>
                 {analysis.missingShips.length > 0 && (
                   <AnalysisText>
-                    <b>{t('Missing Ships')}</b>:{' '}
-                    {analysis.missingShips.join('、')}
+                    <b>{t('Missing Ships')}</b>: {analysis.missingShips.join('、')}
                   </AnalysisText>
                 )}
                 {analysis.missingEquipments.length > 0 && (
                   <AnalysisText>
-                    <b>{t('Missing Equipments')}</b>:{' '}
-                    {analysis.missingEquipments.join('、')}
+                    <b>{t('Missing Equipments')}</b>: {analysis.missingEquipments.join('、')}
                   </AnalysisText>
                 )}
               </>
@@ -184,6 +185,19 @@ export const QuestCard = forwardRef<
             {visibleAnalysisNotes.map((note) => (
               <AnalysisText key={note}>{note}</AnalysisText>
             ))}
+          </AnalysisBlock>
+        )}
+        {liveProgress && (
+          <AnalysisBlock>
+            <AnalysisList>
+              <Tag intent={liveProgressIntent} minimal={true}>
+                {t('Live Progress')}: {liveProgress.summary.completed} /{' '}
+                {liveProgress.summary.total}
+              </Tag>
+            </AnalysisList>
+            <AnalysisText>
+              {liveProgress.goals.map((goal) => goal.label).join(' · ')}
+            </AnalysisText>
           </AnalysisBlock>
         )}
 

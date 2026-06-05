@@ -2,10 +2,16 @@ import { QuestTab } from '../poi/types'
 import {
   buildRawQuestSnapshotAutoExportKey,
   shouldAutoExportRawQuestSnapshot,
+  writeRawQuestSnapshotPayloadToExportLane,
 } from '../poi/rawQuestAutoExport'
+import { PACKAGE_NAME } from '../poi/env'
 import { buildRawQuestSnapshotExportPayload } from '../rawQuestSnapshot'
 
 describe('raw quest auto export decision', () => {
+  afterEach(() => {
+    delete (globalThis as { remote?: unknown }).remote
+  })
+
   test('auto-exports complete All-tab raw snapshots', () => {
     const payload = buildRawQuestSnapshotExportPayload({
       pluginVersion: '0.18.6',
@@ -174,5 +180,104 @@ describe('raw quest auto export decision', () => {
     expect(buildRawQuestSnapshotAutoExportKey(first)).not.toBe(
       buildRawQuestSnapshotAutoExportKey(changed),
     )
+  })
+
+  test('cleans older raw auto-export files after writing the latest snapshot', () => {
+    const deleted: string[] = []
+    const written: string[] = []
+    const targetDirectory =
+      '/Users/mira/Documents/Mira-Workspace/local-fallback/poi-inventory-exports'
+    ;(globalThis as any).remote = {
+      app: {
+        getPath: () => '/Users/mira/Documents',
+      },
+      require: (moduleName: string) => {
+        if (moduleName === 'fs') {
+          return {
+            existsSync: () => false,
+            mkdirSync: jest.fn(),
+            readdirSync: () => [
+              'kancolle_raw_quests_20260606-000001.json',
+              'kancolle_live_quest_progress_20260606-000001.json',
+            ],
+            unlinkSync: (filePath: string) => deleted.push(filePath),
+            writeFileSync: (filePath: string) => written.push(filePath),
+          }
+        }
+        if (moduleName === 'path') {
+          return {
+            basename: (filePath: string) => filePath.split('/').pop(),
+            join: (...parts: string[]) => parts.join('/'),
+          }
+        }
+        throw new Error(`Unexpected module ${moduleName}`)
+      },
+    }
+
+    const filePath = writeRawQuestSnapshotPayloadToExportLane({} as any)
+
+    expect(filePath).toBe(written[0])
+    expect(filePath.startsWith(`${targetDirectory}/kancolle_raw_quests_`)).toBe(
+      true,
+    )
+    expect(deleted).toEqual([
+      `${targetDirectory}/kancolle_raw_quests_20260606-000001.json`,
+    ])
+  })
+
+  test('ignores unrelated Poi store updates before rebuilding raw snapshot payloads', () => {
+    const rawQuestAutoExport = require('../poi/rawQuestAutoExport')
+    const createListener =
+      rawQuestAutoExport.createRawQuestAutoExportStateListener
+    const handleRelevantState = jest.fn()
+
+    expect(typeof createListener).toBe('function')
+    if (typeof createListener !== 'function') {
+      return
+    }
+
+    const rawQuestPages = {}
+    const rawQuestTabObservations = {}
+    const activeQuests = {}
+    const listener = createListener(handleRelevantState)
+    const baseState = {
+      ext: {
+        [PACKAGE_NAME]: {
+          _: {
+            rawQuestPages,
+            rawQuestTabObservations,
+          },
+        },
+      },
+      info: {
+        quests: {
+          activeQuests,
+        },
+      },
+    }
+
+    listener(baseState)
+    listener({
+      ...baseState,
+      info: {
+        ...baseState.info,
+        admiral: {
+          level: 116,
+        },
+      },
+    })
+    listener({
+      ...baseState,
+      ext: {
+        [PACKAGE_NAME]: {
+          _: {
+            rawQuestPages: {},
+            rawQuestTabObservations,
+          },
+        },
+      },
+    })
+
+    expect(handleRelevantState).toHaveBeenCalledTimes(2)
   })
 })

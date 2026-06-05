@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { QuestExportPayload } from '../export'
+import type { LiveQuestProgressState } from '../liveQuestProgress'
 import {
   RAW_QUEST_TAB_OBSERVED_ACTION_TYPE,
   buildRawQuestSnapshotFileName,
@@ -44,6 +45,10 @@ export const usePluginTranslation = () => {
 }
 
 const emptyArray: GameQuest[] = []
+const emptyLiveQuestProgress: LiveQuestProgressState = {
+  records: {},
+  lastUpdatedAt: null,
+}
 /**
  * Use `useGlobalGameQuest` instead
  *
@@ -58,6 +63,20 @@ export const useGameQuest = () => {
     return observePluginStore(listener, (i) => i?._?.questList)
   }, [setQuests])
   return quests
+}
+
+export const usePoiLiveQuestProgress = () => {
+  const [liveQuestProgress, setLiveQuestProgress] =
+    useState<LiveQuestProgressState>(emptyLiveQuestProgress)
+  useEffect(() => {
+    const listener = (progress: LiveQuestProgressState | null) =>
+      setLiveQuestProgress(progress ?? emptyLiveQuestProgress)
+    return observePluginStore(
+      listener,
+      (i) => i?._?.liveQuestProgress ?? null,
+    )
+  }, [])
+  return liveQuestProgress
 }
 
 export const useObservedGameQuest = () => {
@@ -276,6 +295,7 @@ export const useStateExporter = () => {
             ),
             rawQuestPages: {},
             rawQuestTabObservations: {},
+            liveQuestProgress: emptyLiveQuestProgress,
             tabId: QuestTab.ALL,
           },
         },

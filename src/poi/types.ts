@@ -107,6 +107,45 @@ export type QuestClearItemGetAction = {
   body?: unknown
 }
 
+export type BattleResultAction = {
+  type: '@@BattleResult'
+  payload?: {
+    valid?: boolean
+    time?: number
+    rank?: string
+    boss?: boolean
+    map?: number
+    mapCell?: number
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+export type MapNextAction = {
+  type: '@@Response/kcsapi/api_req_map/next'
+  path?: '/kcsapi/api_req_map/next'
+  postBody?: Record<string, unknown>
+  payload?: {
+    body?: {
+      api_maparea_id?: number
+      api_mapinfo_no?: number
+      api_no?: number
+      api_next?: number
+      [key: string]: unknown
+    }
+    time?: number
+    [key: string]: unknown
+  }
+  body?: {
+    api_maparea_id?: number
+    api_mapinfo_no?: number
+    api_no?: number
+    api_next?: number
+    [key: string]: unknown
+  }
+  time?: number
+}
+
 type OtherAction = {
   type: 'otherString' // TODO fix me
   path?: string
@@ -117,6 +156,8 @@ type OtherAction = {
 export type PoiAction =
   | QuestListAction
   | QuestClearItemGetAction
+  | BattleResultAction
+  | MapNextAction
   | RawQuestTabObservedAction
   | OtherAction
 
@@ -138,6 +179,17 @@ export type PoiState = {
       }
     >
     quests?: {
+      records?: Record<
+        string | number,
+        {
+          id?: string | number
+          count?: number
+          required?: number
+          active?: boolean
+          time?: number
+          [subgoal: string]: unknown
+        }
+      >
       activeQuests?: PoiQuestState
     }
   }

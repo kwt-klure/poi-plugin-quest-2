@@ -132,8 +132,7 @@ export const getQuestAnalysisVisibleNotes = (analysis: QuestAnalysis) => {
   }
 
   return analysis.notes.filter(
-    (note) =>
-      !ACTIONABLE_CAVEAT_NOTE_PATTERNS.some((pattern) => pattern.test(note)),
+    (note) => !ACTIONABLE_CAVEAT_NOTE_PATTERNS.some((pattern) => pattern.test(note)),
   )
 }
 

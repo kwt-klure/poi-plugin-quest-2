@@ -52,7 +52,7 @@ const getQuestDocOverrides = (
 ) => {
   const shared = overrides.quests?.shared ?? {}
   const dataSourceSpecific = dataSource
-    ? (overrides.quests?.byDataSource?.[dataSource] ?? {})
+    ? overrides.quests?.byDataSource?.[dataSource] ?? {}
     : {}
   return mergeDocPartialMaps(shared, dataSourceSpecific)
 }

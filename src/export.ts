@@ -4,6 +4,7 @@ import type {
   QuestAnalysisSummary,
 } from './analysis'
 import type { ImportedCsvMeta } from './importedInventory/types'
+import type { LiveQuestProgressState } from './liveQuestProgress'
 import type { GameQuest, PoiQuestState } from './poi/types'
 import type { UnionQuest } from './questHelper'
 
@@ -43,6 +44,7 @@ export interface QuestExportPayload {
     unknownObservedQuests: GameQuest[]
     unknownActiveQuests: GameQuest[]
   }
+  liveProgressSnapshot: LiveQuestProgressState
   quests: QuestExportRecord[]
   analysisSummary: QuestAnalysisSummary
 }
@@ -57,6 +59,7 @@ export const buildQuestExportPayload = ({
   currentTabQuestList,
   observedQuestList,
   activeQuestMap,
+  liveProgressSnapshot = { records: {}, lastUpdatedAt: null },
 }: {
   quests: UnionQuest[]
   analysisMap: Record<number, QuestAnalysis>
@@ -70,6 +73,7 @@ export const buildQuestExportPayload = ({
   currentTabQuestList: GameQuest[]
   observedQuestList: GameQuest[]
   activeQuestMap: PoiQuestState
+  liveProgressSnapshot?: LiveQuestProgressState
 }): QuestExportPayload => ({
   generatedAt: new Date().toISOString(),
   pluginVersion,
@@ -79,16 +83,15 @@ export const buildQuestExportPayload = ({
     observedQuestList,
     activeQuestMap,
     unknownObservedQuests: observedQuestList.filter(
-      (quest) =>
-        !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+      (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
     ),
     unknownActiveQuests: Object.values(activeQuestMap)
       .map((item) => item.detail)
       .filter(
-        (quest) =>
-          !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
+        (quest) => !quests.some((knownQuest) => knownQuest.gameId === quest.api_no),
       ),
   },
+  liveProgressSnapshot,
   quests: quests.map((quest) => ({
     gameId: quest.gameId,
     code: quest.docQuest.code,
@@ -102,7 +105,8 @@ export const buildQuestExportPayload = ({
       structuralFeasibility:
         analysisMap[quest.gameId]?.structuralFeasibility ?? 'unsupported',
       acceptability: analysisMap[quest.gameId]?.acceptability ?? 'unknown',
-      completionState: analysisMap[quest.gameId]?.completionState ?? 'unknown',
+      completionState:
+        analysisMap[quest.gameId]?.completionState ?? 'unknown',
       origin: analysisMap[quest.gameId]?.origin ?? 'none',
       missingShips: analysisMap[quest.gameId]?.missingShips ?? [],
       missingEquipments: analysisMap[quest.gameId]?.missingEquipments ?? [],

@@ -193,4 +193,114 @@ describe('reducer', () => {
     expect(invalidatedState.rawQuestPages).toEqual({})
     expect(invalidatedState.rawQuestTabObservations).toEqual({})
   })
+
+  test('tracks generalized live sortie progress from questlist, battle result, and map terminal actions', () => {
+    const observedState = reducer(undefined, {
+      type: '@@Response/kcsapi/api_get_member/questlist',
+      path: '/kcsapi/api_get_member/questlist',
+      postBody: {
+        api_verno: '1',
+        api_tab_id: QuestTab.ALL,
+      },
+      body: {
+        api_completed_kind: 0,
+        api_count: 1,
+        api_exec_count: 1,
+        api_exec_type: 0,
+        api_list: [
+          {
+            api_no: 982,
+            api_state: QUEST_API_STATE.IN_PROGRESS,
+            api_title: 'B186',
+            api_detail:
+              '旗艦塞繆爾・B・羅伯茨 Mk.II+5 自由艦 出擊 1-5、2-2、3-5 各一次 S 勝，1-6 到達終點一次',
+            api_category: 2,
+            api_type: 1,
+            api_get_material: [0, 0, 0, 0],
+            api_invalid_flag: 0,
+            api_label_type: 1,
+            api_progress_flag: 0,
+            api_voice_id: 0,
+            api_bonus_flag: 1,
+          },
+        ],
+      },
+    })
+
+    expect(observedState.liveQuestProgress.records[982].goals).toHaveLength(4)
+
+    const afterBattle = reducer(observedState, {
+      type: '@@BattleResult',
+      payload: {
+        valid: true,
+        time: 1780640000000,
+        rank: 'S',
+        boss: true,
+        map: 15,
+        mapCell: 12,
+      },
+    })
+    const afterTerminal = reducer(afterBattle, {
+      type: '@@Response/kcsapi/api_req_map/next',
+      path: '/kcsapi/api_req_map/next',
+      postBody: {},
+      body: {
+        api_maparea_id: 1,
+        api_mapinfo_no: 6,
+        api_no: 10,
+        api_next: 0,
+      },
+    })
+
+    expect(
+      afterTerminal.liveQuestProgress.records[982].goals.map(
+        (goal) => goal.count,
+      ),
+    ).toEqual([1, 0, 0, 1])
+  })
+
+  test('clears live quest progress after quest clear invalidation', () => {
+    const observedState = reducer(undefined, {
+      type: '@@Response/kcsapi/api_get_member/questlist',
+      path: '/kcsapi/api_get_member/questlist',
+      postBody: {
+        api_verno: '1',
+        api_tab_id: QuestTab.ALL,
+      },
+      body: {
+        api_completed_kind: 0,
+        api_count: 1,
+        api_exec_count: 1,
+        api_exec_type: 0,
+        api_list: [
+          {
+            api_no: 982,
+            api_state: QUEST_API_STATE.IN_PROGRESS,
+            api_title: 'B186',
+            api_detail:
+              '旗艦塞繆爾・B・羅伯茨 Mk.II+5 自由艦 出擊 1-5、2-2、3-5 各一次 S 勝，1-6 到達終點一次',
+            api_category: 2,
+            api_type: 1,
+            api_get_material: [0, 0, 0, 0],
+            api_invalid_flag: 0,
+            api_label_type: 1,
+            api_progress_flag: 0,
+            api_voice_id: 0,
+            api_bonus_flag: 1,
+          },
+        ],
+      },
+    })
+
+    const invalidatedState = reducer(observedState, {
+      type: '@@Response/kcsapi/api_req_quest/clearitemget',
+      path: '/kcsapi/api_req_quest/clearitemget',
+      postBody: {
+        api_quest_id: '982',
+      },
+      body: {},
+    })
+
+    expect(invalidatedState.liveQuestProgress.records).toEqual({})
+  })
 })

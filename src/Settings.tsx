@@ -22,6 +22,7 @@ import {
   parseShipCsvImport,
 } from './importedInventory/csv'
 import { IN_POI } from './poi/env'
+import { setLiveQuestProgressTaskPanelBridgeEnabled } from './poi/liveQuestProgressTaskPanelBridge'
 import {
   useActiveQuest,
   useGameTab,
@@ -40,6 +41,7 @@ import {
   StoreProvider,
   useDataSource,
   useGlobalGameQuest,
+  useGlobalLiveQuestProgress,
   useGlobalObservedGameQuest,
   useImportedInventory,
   useImportedInventoryActions,
@@ -98,6 +100,7 @@ const DataExportArea = () => {
   const rawQuestTabObservations = useRawQuestTabObservations()
   const currentQuestTab = useGameTab()
   const activeQuestMap = useActiveQuest()
+  const liveProgressSnapshot = useGlobalLiveQuestProgress()
   const analysisMap = useQuestAnalysisMap()
   const debugMap = useQuestAnalysisDebugMap()
   const analysisSummary = summarizeQuestAnalysis(analysisMap)
@@ -125,6 +128,7 @@ const DataExportArea = () => {
         currentTabQuestList,
         observedQuestList,
         activeQuestMap,
+        liveProgressSnapshot,
       })
       const saved = await exportQuestDataToFile(payload)
       if (!saved) {
@@ -143,6 +147,7 @@ const DataExportArea = () => {
     debugMap,
     exportQuestDataToFile,
     importedInventory,
+    liveProgressSnapshot,
     observedQuestList,
     quests,
     t,
@@ -267,6 +272,31 @@ const DataExportArea = () => {
             autoExportRawQuestSnapshot: event.currentTarget.checked,
           })
         }
+      />
+      <Checkbox
+        checked={store.autoExportLiveQuestProgress}
+        label={t('Auto export live quest progress')}
+        onChange={(event) =>
+          updateStore({
+            autoExportLiveQuestProgress: event.currentTarget.checked,
+          })
+        }
+      />
+      <Checkbox
+        checked={store.bridgeLiveQuestProgressToTaskPanel}
+        label={t('Experimental task panel live progress bridge')}
+        onChange={(event) => {
+          const checked = event.currentTarget.checked
+          updateStore({
+            bridgeLiveQuestProgressToTaskPanel: checked,
+          })
+          setLiveQuestProgressTaskPanelBridgeEnabled(checked).catch((error) => {
+            console.warn(
+              'Failed to refresh live quest progress task panel bridge',
+              error,
+            )
+          })
+        }}
       />
       <HTMLSelect
         value={emptyTabSelection}

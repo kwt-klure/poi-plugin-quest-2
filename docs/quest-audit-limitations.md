@@ -110,9 +110,9 @@ the normal quest analysis export only for inventory-side hints.
 
 Auto-export is enabled by default. When Poi observes a complete All-tab
 questlist response, the plugin writes a sanitized raw snapshot to the active
-export lane without requiring a manual Settings export. Manual export remains
-available as a fallback, and the Settings panel can disable auto-export if
-needed.
+export lane without requiring Computer Use or a manual Settings export. Manual
+export remains available as a fallback, and the Settings panel can disable
+auto-export if needed.
 
 When Poi observes a quest-clear response, the plugin invalidates the observed
 raw quest state until the next questlist response. This avoids leaving a

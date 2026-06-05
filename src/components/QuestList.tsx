@@ -5,7 +5,7 @@ import { VariableSizeList as List, ListChildComponentProps } from 'react-window'
 import styled from 'styled-components'
 import { useIsQuestPluginTab } from '../poi/hooks'
 import type { UnionQuest } from '../questHelper'
-import { useQuestAnalysisMap } from '../store'
+import { useGlobalLiveQuestProgress, useQuestAnalysisMap } from '../store'
 import { QuestCard } from './QuestCard'
 
 const QuestListWrapper = styled.div`
@@ -39,10 +39,11 @@ export const QuestList = ({ quests }: { quests: UnionQuest[] }) => {
   const listRef = useRef<List>(null)
   const rowHeights = useRef<Record<number, number>>({})
   const analysisMap = useQuestAnalysisMap()
+  const liveQuestProgress = useGlobalLiveQuestProgress()
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0)
-  }, [quests])
+  }, [liveQuestProgress, quests])
 
   useEffect(() => {
     if (activeTab) {
@@ -74,7 +75,7 @@ export const QuestList = ({ quests }: { quests: UnionQuest[] }) => {
       if (rowRef.current) {
         setRowHeight(index, rowRef.current.clientHeight)
       }
-    }, [analysis, code, desc, index, memo2, name, rewards])
+    }, [analysis, code, desc, index, memo2, name, rewards, setRowHeight])
 
     return (
       <div style={style}>

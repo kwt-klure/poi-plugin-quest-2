@@ -23,21 +23,10 @@ const SHIP_TYPE_TOKENS: Array<{
     tokens: ['駆逐艦', '驅逐艦', '驱逐舰', '駆逐', '驅逐', '驱逐'],
     shipTypes: [2],
   },
-  {
-    label: '水上機母艦',
-    tokens: ['水上機母艦', '水上机母舰'],
-    shipTypes: [16],
-  },
+  { label: '水上機母艦', tokens: ['水上機母艦', '水上机母舰'], shipTypes: [16] },
   {
     label: '重巡洋艦 / 航空巡洋艦',
-    tokens: [
-      '重巡洋艦',
-      '重巡洋舰',
-      '航空巡洋艦',
-      '航空巡洋舰',
-      '重巡',
-      '航巡',
-    ],
+    tokens: ['重巡洋艦', '重巡洋舰', '航空巡洋艦', '航空巡洋舰', '重巡', '航巡'],
     shipTypes: [5, 6],
   },
   { label: '空母系', tokens: ['空母系'], shipTypes: [7, 11, 18] },
@@ -65,7 +54,7 @@ const GENERIC_QUOTED_TOKEN_PATTERNS = [/^主力$/u, /^遠征$/u, /^远征$/u]
 const buildSourceText = (quest: UnionQuest) =>
   [quest.docQuest.desc, quest.docQuest.memo2].filter(Boolean).join(' ')
 
-const unique = <T>(entries: T[]) => Array.from(new Set(entries))
+const unique = <T,>(entries: T[]) => Array.from(new Set(entries))
 
 const normalizeName = (name: string) =>
   name.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')
@@ -89,9 +78,7 @@ const expandVariantNames = (rawName: string): string[] => {
 
   variants.forEach((variant) => {
     if (
-      SPECIAL_VARIANT_SUFFIX_PATTERNS.some((pattern) =>
-        pattern.test(variant),
-      ) ||
+      SPECIAL_VARIANT_SUFFIX_PATTERNS.some((pattern) => pattern.test(variant)) ||
       variant.length <= 4
     ) {
       names.push(
@@ -119,9 +106,7 @@ const extractShipTypeMatches = (text: string) =>
 const extractQuotedNames = (text: string): string[] =>
   unique(
     Array.from(text.matchAll(QUOTED_NAME_PATTERN)).flatMap((match) =>
-      expandVariantNames(match[1]).filter(
-        (name) => !isGenericQuotedToken(name),
-      ),
+      expandVariantNames(match[1]).filter((name) => !isGenericQuotedToken(name)),
     ),
   )
 
@@ -161,9 +146,7 @@ const extractFlagshipSegment = (text: string): string | null => {
   return descriptiveMatch?.[1] ?? null
 }
 
-const extractFlagshipTypeRequirements = (
-  text: string,
-): PositionRequirement[] => {
+const extractFlagshipTypeRequirements = (text: string): PositionRequirement[] => {
   const segment = extractFlagshipSegment(text)
   if (!segment) {
     return []
@@ -236,16 +219,16 @@ const extractIncludedShipNames = (
     return []
   }
 
-  return extractQuotedNames(text).filter(
-    (name) => !consumedNames.includes(name),
-  )
+  return extractQuotedNames(text).filter((name) => !consumedNames.includes(name))
 }
 
 const extractShipTypeRequirements = (text: string): ShipTypeRequirement[] =>
   SHIP_TYPE_TOKENS.flatMap(({ label, shipTypes, tokens }) =>
     tokens.flatMap((token) =>
       Array.from(
-        text.matchAll(new RegExp(`${token}\\s*(\\d+)\\s*[隻艘](以上)?`, 'gu')),
+        text.matchAll(
+          new RegExp(`${token}\\s*(\\d+)\\s*[隻艘](以上)?`, 'gu'),
+        ),
       ).map((match) => ({
         label: `${label} ${match[1]} 艘`,
         shipTypes,
@@ -276,8 +259,7 @@ const buildInferenceNotes = (text: string): string[] => {
 const inferQuestRequirement = (quest: UnionQuest): QuestRequirement | null => {
   const text = buildSourceText(quest)
   const flagshipNames = extractFlagshipNames(text)
-  const flagshipTypes =
-    flagshipNames.length > 0 ? [] : extractFlagshipTypeRequirements(text)
+  const flagshipTypes = flagshipNames.length > 0 ? [] : extractFlagshipTypeRequirements(text)
   const escortAlternativeNames = extractEscortAlternativeNames(text)
   const includedShipNames = extractIncludedShipNames(
     text,

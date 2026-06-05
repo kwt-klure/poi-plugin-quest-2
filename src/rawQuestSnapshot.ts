@@ -348,9 +348,7 @@ export const calculateCoverage = (
     )
   }
   if (missingTabs.length > 0) {
-    notes.push(
-      `Missing observed quest listing source: ${missingTabs.join(', ')}`,
-    )
+    notes.push(`Missing observed quest listing source: ${missingTabs.join(', ')}`)
   }
   if (
     observedTabs.includes(QuestTab.ALL) &&
@@ -384,14 +382,15 @@ export const calculateCoverage = (
   const requiredTabDetails = tabDetails.filter((detail) =>
     expectedTabs.includes(detail.tabId),
   )
-  const pageStatus: RawQuestCoverageStatus = requiredTabDetails.every(
-    (detail) => !detail.observed,
-  )
-    ? 'unknown'
-    : missingTabs.length === 0 &&
-        requiredTabDetails.every((detail) => detail.pageStatus === 'complete')
-      ? 'complete'
-      : 'partial'
+  const pageStatus: RawQuestCoverageStatus =
+    requiredTabDetails.every((detail) => !detail.observed)
+      ? 'unknown'
+      : missingTabs.length === 0 &&
+          requiredTabDetails.every(
+            (detail) => detail.pageStatus === 'complete',
+          )
+        ? 'complete'
+        : 'partial'
   const status: RawQuestCoverageStatus =
     observedTabs.length === 0
       ? 'unknown'
