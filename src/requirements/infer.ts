@@ -1,4 +1,5 @@
 import type { UnionQuest } from '../questHelper'
+import type { PositionRequirement } from './types'
 import type { QuestRequirement, ShipTypeRequirement } from './types'
 
 export type ResolvedQuestRequirement =
@@ -12,10 +13,22 @@ const SHIP_TYPE_TOKENS: Array<{
   tokens: string[]
   shipTypes: number[]
 }> = [
-  { label: '輕巡洋艦', tokens: ['軽巡洋艦', '輕巡洋艦', '轻巡洋舰'], shipTypes: [3] },
-  { label: '驅逐艦', tokens: ['駆逐艦', '驅逐艦', '驱逐舰'], shipTypes: [2] },
+  {
+    label: '輕巡洋艦',
+    tokens: ['軽巡洋艦', '輕巡洋艦', '轻巡洋舰', '軽巡', '輕巡', '轻巡'],
+    shipTypes: [3],
+  },
+  {
+    label: '驅逐艦',
+    tokens: ['駆逐艦', '驅逐艦', '驱逐舰', '駆逐', '驅逐', '驱逐'],
+    shipTypes: [2],
+  },
   { label: '水上機母艦', tokens: ['水上機母艦', '水上机母舰'], shipTypes: [16] },
-  { label: '重巡洋艦 / 航空巡洋艦', tokens: ['重巡洋艦', '重巡洋舰', '航空巡洋艦', '航空巡洋舰'], shipTypes: [5, 6] },
+  {
+    label: '重巡洋艦 / 航空巡洋艦',
+    tokens: ['重巡洋艦', '重巡洋舰', '航空巡洋艦', '航空巡洋舰', '重巡', '航巡'],
+    shipTypes: [5, 6],
+  },
   { label: '空母系', tokens: ['空母系'], shipTypes: [7, 11, 18] },
 ]
 
@@ -81,6 +94,15 @@ const expandVariantNames = (rawName: string): string[] => {
   return unique(names)
 }
 
+const extractShipTypeMatches = (text: string) =>
+  unique(
+    SHIP_TYPE_TOKENS.flatMap(({ label, tokens, shipTypes }) =>
+      tokens.some((token) => text.includes(token))
+        ? [{ label, shipTypes }]
+        : [],
+    ),
+  )
+
 const extractQuotedNames = (text: string): string[] =>
   unique(
     Array.from(text.matchAll(QUOTED_NAME_PATTERN)).flatMap((match) =>
@@ -115,6 +137,27 @@ const extractShipLikeNames = (text: string): string[] =>
       ),
   )
 
+const extractFlagshipSegment = (text: string): string | null => {
+  const descriptiveMatch =
+    text.match(/以(.{1,24}?)為旗艦/u) ??
+    text.match(/以(.{1,24}?)为旗舰/u) ??
+    text.match(/旗艦に(.{1,24}?)を/u)
+
+  return descriptiveMatch?.[1] ?? null
+}
+
+const extractFlagshipTypeRequirements = (text: string): PositionRequirement[] => {
+  const segment = extractFlagshipSegment(text)
+  if (!segment) {
+    return []
+  }
+
+  return extractShipTypeMatches(segment).map(({ label, shipTypes }) => ({
+    label: `旗艦：${label}`,
+    shipTypes,
+  }))
+}
+
 const extractFlagshipNames = (text: string): string[] => {
   const flagshipIndex = text.indexOf('旗艦')
   if (flagshipIndex >= 0) {
@@ -133,17 +176,21 @@ const extractFlagshipNames = (text: string): string[] => {
     return [normalizeName(directMatch[1])]
   }
 
-  const descriptiveMatch =
-    text.match(/以(.{1,24}?)為旗艦/u) ??
-    text.match(/以(.{1,24}?)为旗舰/u) ??
-    text.match(/旗艦に(.{1,24}?)を/u)
-  if (!descriptiveMatch?.[1]) {
+  const segment = extractFlagshipSegment(text)
+  if (!segment) {
     return []
   }
 
-  return extractQuotedNames(descriptiveMatch[1]).concat(
-    extractShipLikeNames(descriptiveMatch[1]),
-  )
+  const quotedNames = extractQuotedNames(segment)
+  if (quotedNames.length > 0) {
+    return quotedNames
+  }
+
+  if (extractShipTypeMatches(segment).length > 0) {
+    return []
+  }
+
+  return extractShipLikeNames(segment)
 }
 
 const extractEscortAlternativeNames = (text: string): string[] => {
@@ -212,6 +259,7 @@ const buildInferenceNotes = (text: string): string[] => {
 const inferQuestRequirement = (quest: UnionQuest): QuestRequirement | null => {
   const text = buildSourceText(quest)
   const flagshipNames = extractFlagshipNames(text)
+  const flagshipTypes = flagshipNames.length > 0 ? [] : extractFlagshipTypeRequirements(text)
   const escortAlternativeNames = extractEscortAlternativeNames(text)
   const includedShipNames = extractIncludedShipNames(
     text,
@@ -221,14 +269,17 @@ const inferQuestRequirement = (quest: UnionQuest): QuestRequirement | null => {
 
   const requirement: QuestRequirement = {
     positions:
-      flagshipNames.length > 0
+      flagshipNames.length > 0 || flagshipTypes.length > 0
         ? {
-            flagship: [
-              {
-                label: `旗艦：${flagshipNames.join(' / ')}`,
-                names: flagshipNames,
-              },
-            ],
+            flagship:
+              flagshipNames.length > 0
+                ? [
+                    {
+                      label: `旗艦：${flagshipNames.join(' / ')}`,
+                      names: flagshipNames,
+                    },
+                  ]
+                : flagshipTypes,
           }
         : undefined,
     ships: [

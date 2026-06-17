@@ -179,7 +179,6 @@ export const QuestCard = forwardRef<
             ))}
           </AnalysisBlock>
         )}
-
         <CardAction gameId={gameId}></CardAction>
       </CardBody>
 

@@ -13,6 +13,7 @@ import type { QUEST_DATA } from '../../build'
 import { PACKAGE_NAME } from '../poi/env'
 import { yes } from '../utils'
 import { GameQuestProvider } from './gameQuest'
+import { LiveQuestProgressProvider } from './liveQuestProgress'
 
 export const ALL_CATEGORY_TAG = {
   name: 'All',
@@ -55,6 +56,9 @@ export const initialState = {
   }>,
   activePresetId: null as string | null,
   showFilterBuilder: true,
+  autoExportRawQuestSnapshot: true,
+  autoExportLiveQuestProgress: true,
+  bridgeLiveQuestProgressToTaskPanel: false,
   importedInventory: emptyImportedInventoryState,
 }
 
@@ -103,9 +107,11 @@ export const StoreProvider = ({ children }: { children?: React.ReactNode }) => {
   const [state, setState] = useStorage<State>(initialState)
   return (
     <GameQuestProvider>
-      <SetStateContext.Provider value={setState}>
-        <StateContext.Provider value={state}>{children}</StateContext.Provider>
-      </SetStateContext.Provider>
+      <LiveQuestProgressProvider>
+        <SetStateContext.Provider value={setState}>
+          <StateContext.Provider value={state}>{children}</StateContext.Provider>
+        </SetStateContext.Provider>
+      </LiveQuestProgressProvider>
     </GameQuestProvider>
   )
 }

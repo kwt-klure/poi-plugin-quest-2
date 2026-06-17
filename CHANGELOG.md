@@ -2,13 +2,31 @@
 
 ## Unreleased
 
+## 0.18.16
+
 ### Minor Changes
 
 - Redefine quest analysis `status` as a planner-facing state model so completed, inferred-completed, locked, and unknown quests no longer collapse into `ready`.
 - Add explicit `structuralFeasibility`, `acceptability`, and `completionState` layers to exported quest analysis JSON and switch the primary UI/filter wording from `Requirement Ready` to `Actionable`.
+- Add an independent raw quest snapshot export so account-visible questlist API observations can be saved separately from inventory-based quest analysis.
+- Add a plugin-local live sortie quest progress sidecar with KC Quest Audit card display, quest-analysis export metadata, and separate `kancolle_live_quest_progress_*.json` auto-exports.
+- Add an opt-in experimental bridge that mirrors plugin-local live quest progress into Poi's native task panel without overriding native Poi quest records.
 
 ### Patch Changes
 
+- Add a `Can accept` toolbar filter based on observed in-game quest state, and include observed new quests that are not yet in the generated quest data.
+- Add a lower-friction raw quest snapshot archive export with underscore filenames, explicit empty-tab observations, and separate tab/page coverage metadata.
+- Fall back raw quest snapshot exports to `local-fallback/poi-inventory-exports` when the external archive lane is unavailable.
+- Treat local `archive/` shadow directories as unavailable and block empty raw snapshot exports before they write misleading JSON files.
+- Treat the All quest tab as the complete raw listing source; category tabs are no longer required for complete coverage.
+- Auto-export complete All-tab raw quest snapshots to the active export lane, with a Settings toggle and quest-clear invalidation to avoid stale current-state files.
+- Keep only the latest auto-exported raw quest snapshot and live quest progress JSON per export lane prefix after successful writes.
+- Reduce Poi hot-path overhead by gating auto-export work to relevant state changes and only patching Poi `getState()` when the experimental task-panel bridge is enabled.
+- Prefer Poi native quest progress records for card progress display, and hide sidecar-only zero progress until an actual event has been observed.
+- Expand live sortie progress parsing for native-like task panel counters, including destination-arrival and 1-6 terminal quest goals.
+- Update upstream generated quest text/data to `kcanotify-gamedata` `2026050202` and `kcQuests` `1e986e57611fcab7217dfc806a508c35de81e87f`.
+- Declare Blueprint, Blueprint Select, and filter-sphere packages as runtime dependencies so clean Poi installs can enable the plugin without relying on stale hoisted packages.
+- Make plugin load-time hooks tolerate unavailable Poi state while enabling, instead of surfacing an unhandled reducer patch error.
 - Update upstream `kcQuests` generated quest data to `9ceb602aaede9faca8102115ba1edcbe9f8866f4`.
 - Stop generating and packaging `build/vendor/*.map` files so npm releases no longer leak vendor source maps.
 - Treat simple progress-only quests with no specific roster/equipment constraints as directly actionable in the main UI, and suppress low-value actionable caveat text so cards like `Bm7`, `Dd2`, and `Ed1` read more cleanly.
@@ -24,6 +42,7 @@
 ### Documentation
 
 - Clarify in README and internal docs that quest requirement analysis is still partial and should be treated as an inventory audit aid, not a full completion guarantee.
+- Document raw quest auto-export, live quest progress sidecar files, and the experimental Poi task panel bridge in README.
 - Document the rapid new-quest update workflow and explicitly record that the fork should preserve the original quest data and translation architecture.
 - Add a non-runtime public maintenance JSON draft so newly discovered quests can be staged in both markdown and machine-readable form before `api_no` / `gameId` is confirmed.
 

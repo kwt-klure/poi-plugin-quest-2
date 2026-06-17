@@ -1,4 +1,5 @@
 import type { PluginState } from '../reducer'
+import type { RawQuestTabObservedAction } from '../rawQuestSnapshot'
 
 export enum QUEST_API_STATE {
   DEFAULT = 1,
@@ -73,12 +74,13 @@ export enum QuestTab {
   OTHERS = '5',
 }
 
-type QuestListAction = {
+export type QuestListAction = {
   type: '@@Response/kcsapi/api_get_member/questlist'
   path: '/kcsapi/api_get_member/questlist'
   postBody: {
-    api_verno: '1'
+    api_verno?: '1'
     api_tab_id: QuestTab
+    [key: string]: unknown
   }
   body: {
     api_completed_kind: number
@@ -87,8 +89,75 @@ type QuestListAction = {
     // In progress count
     api_exec_count: number
     api_exec_type: number
+    api_page_no?: string | number
+    api_disp_page?: string | number
+    api_page_count?: string | number
     api_list: GameQuest[]
+    [key: string]: unknown
   }
+}
+
+export type QuestClearItemGetAction = {
+  type: '@@Response/kcsapi/api_req_quest/clearitemget'
+  path: '/kcsapi/api_req_quest/clearitemget'
+  postBody?: {
+    api_quest_id?: string | number
+    [key: string]: unknown
+  }
+  body?: unknown
+}
+
+export type BattleResultAction = {
+  type: '@@BattleResult'
+  time?: number
+  payload?: {
+    valid?: boolean
+    time?: number
+    rank?: string
+    boss?: boolean
+    map?: number
+    mapCell?: number
+    [key: string]: unknown
+  }
+  result?: {
+    valid?: boolean
+    rank?: string
+    boss?: boolean
+    map?: number
+    mapCell?: number
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+export type MapNextAction = {
+  type: '@@Response/kcsapi/api_req_map/next'
+  path?: '/kcsapi/api_req_map/next'
+  postBody?: Record<string, unknown>
+  payload?: {
+    body?: {
+      api_maparea_id?: number
+      api_mapinfo_no?: number
+      api_no?: number
+      api_next?: number
+      [key: string]: unknown
+    }
+    time?: number
+    [key: string]: unknown
+  }
+  body?: {
+    api_maparea_id?: number
+    api_mapinfo_no?: number
+    api_no?: number
+    api_next?: number
+    [key: string]: unknown
+  }
+  time?: number
+}
+
+export type SeedLiveQuestProgressFromActiveQuestsAction = {
+  type: '@@poi-plugin-kc-quest-audit/seed-live-quest-progress-from-poi-active-quests'
+  activeQuestMap: PoiQuestState
 }
 
 type OtherAction = {
@@ -98,7 +167,14 @@ type OtherAction = {
   body?: unknown
 }
 
-export type PoiAction = QuestListAction | OtherAction
+export type PoiAction =
+  | QuestListAction
+  | QuestClearItemGetAction
+  | BattleResultAction
+  | MapNextAction
+  | SeedLiveQuestProgressFromActiveQuestsAction
+  | RawQuestTabObservedAction
+  | OtherAction
 
 export type PoiState = {
   ui: {
@@ -118,6 +194,17 @@ export type PoiState = {
       }
     >
     quests?: {
+      records?: Record<
+        string | number,
+        {
+          id?: string | number
+          count?: number
+          required?: number
+          active?: boolean
+          time?: number
+          [subgoal: string]: unknown
+        }
+      >
       activeQuests?: PoiQuestState
     }
   }
@@ -152,6 +239,7 @@ export type PoiState = {
 export type Store<S> = {
   getState: () => S
   subscribe: (listener: () => void) => () => void
+  dispatch?: (action: { type: string; [key: string]: unknown }) => unknown
 }
 
 // state.info.quests.activeQuests

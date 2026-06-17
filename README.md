@@ -29,11 +29,15 @@ On top of that, it adds local audit and maintenance tooling that the original pl
 ## What This Fork Adds
 
 - Inventory-based quest requirement analysis against imported ship/equipment CSV data
-- Quest card summaries such as `Ready`, `Missing ships`, `Missing equipments`, and `No definitive data`
+- Quest card summaries such as `Actionable`, `Missing ships`, `Missing equipments`, and `No definitive data`
 - Conservative parser-based fallback when no curated requirement rule exists
 - Curated alternative requirement branches for quests with A/B composition paths
+- A `Can accept` filter for quests currently listed by the game and not yet accepted
 - Export of quest analysis as JSON
 - Observed in-game quest snapshot export for maintenance-time quest discovery
+- Auto-exported raw quest snapshots for lower-friction current quest-state refreshes
+- Live sortie quest progress sidecar files for supported active sortie quests
+- Optional experimental bridge that mirrors supported sidecar progress into Poi's native task panel
 - Temporary local quest overlay support without editing generated upstream data
 - A maintenance draft workflow for newly added quests before `api_no / gameId` is confirmed
 
@@ -73,12 +77,13 @@ This is the safer path if you want to test the fork before it is published.
 
    ```sh
    cd ~/Library/Application\ Support/poi/plugins
-   npm install --no-save /path/to/poi-plugin-kc-quest-audit-<version>.tgz
+   npm uninstall poi-plugin-kc-quest-audit
+   npm install --save /path/to/poi-plugin-kc-quest-audit-<version>.tgz
    ```
 
 5. Reload Poi or restart the app.
 
-If you are upgrading an existing local install, running the same `npm install --no-save` command with the new tarball is enough.
+The uninstall step is intentional for local tarball upgrades. It avoids stale installed files when the tarball path or package manager cache would otherwise reuse an older package tree. After installing, `package.json` and `package-lock.json` in Poi's plugin directory should both point to the local tarball path, and `node_modules/poi-plugin-kc-quest-audit` should be a real package directory, not a symlink.
 
 ## Data Sources
 
@@ -100,10 +105,13 @@ The audit layer is intentionally conservative.
 - Curated rules can now express alternative branches such as:
   - `Langley` flagship
   - or `CVL >= 2`
+- `Can accept` and `Actionable` are intentionally separate:
+  - `Can accept` means the game has listed the quest with the unaccepted state.
+  - `Actionable` means the quest is currently available and the modeled inventory-side conditions look ready.
 
 When a quest has explicit alternatives:
 
-- satisfying any branch is enough for `Ready`
+- satisfying any branch is enough for the inventory side of `Actionable`
 - the UI can show which alternative branch matched
 - if none match, the UI shows the closest branch instead of dumping every possible path at once
 
@@ -132,13 +140,41 @@ Once `api_no / gameId` is confirmed from Poi:
 
 For the full workflow, see [`docs/rapid-quest-update.md`](docs/rapid-quest-update.md).
 
+## Raw Quest Snapshot Lane
+
+The settings panel includes a separate raw quest snapshot export for account-visible questlist state.
+
+- `Auto export raw quest snapshot` is enabled by default. When Poi observes a complete All-tab questlist response, the plugin writes a sanitized raw snapshot to the active export lane without a manual Settings export.
+- `Export raw quest snapshot` opens a save dialog and defaults to the active export lane.
+- `Export raw snapshot to archive` writes directly to the active export lane: `~/Documents/Mira-Workspace/archive/poi-inventory-exports/` when the archive root is available, otherwise `~/Documents/Mira-Workspace/local-fallback/poi-inventory-exports/`.
+- Raw snapshot filenames use `kancolle_raw_quests_YYYYMMDD-HHMMSS.json`.
+- Coverage records All-tab status and page status separately. Daily / Weekly / Monthly / Once / Others tabs are optional extra observations, not required for completeness.
+- If a quest tab is visually checked and empty but no questlist API response is emitted, use the empty-tab marker before exporting.
+- If no raw questlist page or empty-tab observation has been captured yet, export is blocked instead of writing an empty snapshot.
+- After a quest-clear response, observed raw quest state is invalidated until Poi emits the next questlist response.
+
+Raw snapshots answer `listed_now` and `accepted_now`; they do not replace the inventory-side quest analysis layer.
+
+## Live Quest Progress
+
+The plugin can also keep a lightweight local sidecar for supported live sortie progress.
+
+- The sidecar is written as `kancolle_live_quest_progress_YYYYMMDD-HHMMSS.json` in the same active export lane used by raw quest snapshots.
+- Only the latest auto-exported live progress sidecar is kept for that lane prefix.
+- Supported sortie quests can be split into per-map counters such as `2-3 S 0 / 1`, `4-1 S 0 / 1`, or `1-6 terminal 0 / 1`.
+- Poi's native quest records still take priority. The plugin only supplies missing records when the experimental bridge is enabled.
+- The bridge is conservative: it does not click, accept, clear, or play quests, and it does not override native Poi quest progress records.
+
+This feature is meant to make Poi's existing right-side task panel more useful for quests that Poi does not already enumerate in detail. It is still a best-effort helper, not an authoritative replacement for the game's own quest state.
+
 ## Current Limits
 
 This plugin is an audit aid, not a full authoritative quest solver.
 
 - It mainly judges inventory and composition-side conditions.
-- Dynamic progress conditions such as sortie counts, map clears, victory ranks, and many battle-side conditions are still not fully audited.
-- `Ready` means the currently imported inventory appears to satisfy the modeled inventory conditions. It does not guarantee the quest is fully completable in-game.
+- Dynamic progress conditions such as sortie counts, map clears, victory ranks, and many battle-side conditions are only supported for the subset of quests that the live progress parser can safely model.
+- `Actionable` means the quest is currently listed by the game and the currently imported inventory appears to satisfy the modeled inventory conditions. It does not guarantee the quest is fully completable in-game.
+- `Can accept` depends on observed in-game questlist pages. If not all quest tabs have been visited, the list can still be partial.
 - `No definitive data` means quest data exists, but the plugin does not yet have enough structured requirement data to judge it safely.
 
 For more detail, see [`docs/quest-audit-limitations.md`](docs/quest-audit-limitations.md).

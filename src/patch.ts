@@ -1,6 +1,6 @@
 import type { i18n } from 'i18next'
 import { QUEST_DATA } from '../build'
-import { importFromPoi, PACKAGE_NAME } from './poi/env'
+import { importFromPoi, IN_POI, PACKAGE_NAME } from './poi/env'
 import { getPoiStore } from './poi/store'
 import { getStorage } from './store'
 
@@ -24,7 +24,7 @@ export const hasEnabledConflictingQuestPlugin = (
 
 const shouldSkipLegacyQuestPluginPatch = async () => {
   const poiStore = await getPoiStore()
-  const plugins = poiStore.getState().plugins ?? []
+  const plugins = poiStore.getState()?.plugins ?? []
 
   if (
     plugins.some(
@@ -71,8 +71,8 @@ const getQuestState = (maybeLanguage: string) => {
  * @env poi
  */
 export const patchLegacyQuestPluginReducer = async () => {
-  if (await shouldSkipLegacyQuestPluginPatch()) {
-    // skip patch if legacy quest plugin or another quest-info variant is enabled
+  if (!IN_POI || (await shouldSkipLegacyQuestPluginPatch())) {
+    // skip patch outside poi, or if legacy quest plugin/another quest-info variant is enabled
     return
   }
 
@@ -120,8 +120,8 @@ export const patchLegacyQuestPluginReducer = async () => {
  * @env poi
  */
 export const clearPatchLegacyQuestPluginReducer = async () => {
-  if (await shouldSkipLegacyQuestPluginPatch()) {
-    // skip clear if legacy quest plugin or another quest-info variant is enabled
+  if (!IN_POI || (await shouldSkipLegacyQuestPluginPatch())) {
+    // skip clear outside poi, or if legacy quest plugin/another quest-info variant is enabled
     return
   }
   try {

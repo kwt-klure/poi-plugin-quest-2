@@ -1,4 +1,8 @@
-import { hasEnabledConflictingQuestPlugin } from '../patch'
+import {
+  clearPatchLegacyQuestPluginReducer,
+  hasEnabledConflictingQuestPlugin,
+  patchLegacyQuestPluginReducer,
+} from '../patch'
 
 describe('hasEnabledConflictingQuestPlugin', () => {
   test('returns false when only the current plugin is enabled', () => {
@@ -32,5 +36,12 @@ describe('hasEnabledConflictingQuestPlugin', () => {
         'poi-plugin-kc-quest-audit',
       ),
     ).toBe(false)
+  })
+})
+
+describe('legacy quest reducer patch lifecycle', () => {
+  test('no-ops outside the Poi runtime', async () => {
+    await expect(patchLegacyQuestPluginReducer()).resolves.toBeUndefined()
+    await expect(clearPatchLegacyQuestPluginReducer()).resolves.toBeUndefined()
   })
 })

@@ -1,6 +1,7 @@
 import {
   AnchorButton,
   Button,
+  Checkbox,
   HTMLSelect,
   Intent,
   Text,
@@ -21,16 +22,26 @@ import {
   parseShipCsvImport,
 } from './importedInventory/csv'
 import { IN_POI } from './poi/env'
+import { setLiveQuestProgressTaskPanelBridgeEnabled } from './poi/liveQuestProgressTaskPanelBridge'
 import {
   useActiveQuest,
+  useGameTab,
+  useMarkRawQuestTabObserved,
   usePluginTranslation,
+  useRawQuestPages,
+  useRawQuestTabObservations,
   useStateExporter,
 } from './poi/hooks'
+import {
+  buildRawQuestSnapshotExportPayload,
+  hasRawQuestSnapshotData,
+} from './rawQuestSnapshot'
 import { tips } from './poi/utils'
 import {
   StoreProvider,
   useDataSource,
   useGlobalGameQuest,
+  useGlobalLiveQuestProgress,
   useGlobalObservedGameQuest,
   useImportedInventory,
   useImportedInventoryActions,
@@ -38,7 +49,9 @@ import {
   useQuestAnalysisDebugMap,
   useQuestAnalysisMap,
   useRemoveStorage,
+  useStore,
 } from './store'
+import { QuestTab } from './poi/types'
 
 const Container = styled.div`
   display: flex;
@@ -68,12 +81,26 @@ const ImportSummary = styled.div`
 
 const DataExportArea = () => {
   const [text, setText] = useState<string>('')
+  const [emptyTabSelection, setEmptyTabSelection] = useState<QuestTab>(
+    QuestTab.DAILY,
+  )
   const { t } = usePluginTranslation()
-  const { exportQuestDataToFile, importAsPoiState } = useStateExporter()
+  const { store, updateStore } = useStore()
+  const {
+    exportQuestDataToFile,
+    exportRawQuestSnapshotToArchive,
+    exportRawQuestSnapshotToFile,
+    importAsPoiState,
+  } = useStateExporter()
+  const markRawQuestTabObserved = useMarkRawQuestTabObserved()
   const quests = useQuest()
   const currentTabQuestList = useGlobalGameQuest()
   const observedQuestList = useGlobalObservedGameQuest()
+  const rawQuestPages = useRawQuestPages()
+  const rawQuestTabObservations = useRawQuestTabObservations()
+  const currentQuestTab = useGameTab()
   const activeQuestMap = useActiveQuest()
+  const liveProgressSnapshot = useGlobalLiveQuestProgress()
   const analysisMap = useQuestAnalysisMap()
   const debugMap = useQuestAnalysisDebugMap()
   const analysisSummary = summarizeQuestAnalysis(analysisMap)
@@ -101,6 +128,7 @@ const DataExportArea = () => {
         currentTabQuestList,
         observedQuestList,
         activeQuestMap,
+        liveProgressSnapshot,
       })
       const saved = await exportQuestDataToFile(payload)
       if (!saved) {
@@ -119,17 +147,170 @@ const DataExportArea = () => {
     debugMap,
     exportQuestDataToFile,
     importedInventory,
+    liveProgressSnapshot,
     observedQuestList,
     quests,
     t,
   ])
 
+  const handleExportRawQuestSnapshot = useCallback(async () => {
+    try {
+      const payload = buildRawQuestSnapshotExportPayload({
+        pluginVersion: PKG.version,
+        rawQuestPages,
+        rawQuestTabObservations,
+        activeQuestMap,
+      })
+      if (!hasRawQuestSnapshotData(payload)) {
+        tips.error(t('No raw quest snapshot data observed yet'))
+        return
+      }
+      const saved = await exportRawQuestSnapshotToFile(payload)
+      if (!saved) {
+        return
+      }
+      tips.success(
+        t('Exported raw quest snapshot file', {
+          coverage: payload.coverage.status,
+          tab: currentQuestTab,
+        }),
+      )
+    } catch (error) {
+      console.error(error)
+      tips.error(t('Failed to export raw quest snapshot file'))
+    }
+  }, [
+    activeQuestMap,
+    currentQuestTab,
+    exportRawQuestSnapshotToFile,
+    rawQuestPages,
+    rawQuestTabObservations,
+    t,
+  ])
+
+  const handleExportRawQuestSnapshotToArchive = useCallback(async () => {
+    try {
+      const payload = buildRawQuestSnapshotExportPayload({
+        pluginVersion: PKG.version,
+        rawQuestPages,
+        rawQuestTabObservations,
+        activeQuestMap,
+      })
+      if (!hasRawQuestSnapshotData(payload)) {
+        tips.error(t('No raw quest snapshot data observed yet'))
+        return
+      }
+      await exportRawQuestSnapshotToArchive(payload)
+      tips.success(
+        t('Exported raw quest snapshot to archive', {
+          coverage: payload.coverage.status,
+          tab: currentQuestTab,
+        }),
+      )
+    } catch (error) {
+      console.error(error)
+      tips.error(t('Failed to export raw quest snapshot to archive'))
+    }
+  }, [
+    activeQuestMap,
+    currentQuestTab,
+    exportRawQuestSnapshotToArchive,
+    rawQuestPages,
+    rawQuestTabObservations,
+    t,
+  ])
+
+  const handleMarkEmptyTabObserved = useCallback(async () => {
+    try {
+      await markRawQuestTabObserved(emptyTabSelection)
+      tips.success(
+        t('Marked quest tab as observed empty', {
+          tab: emptyTabSelection,
+        }),
+      )
+    } catch (error) {
+      console.error(error)
+      tips.error(t('Failed to mark quest tab as observed empty'))
+    }
+  }, [emptyTabSelection, markRawQuestTabObserved, t])
+
+  const emptyTabOptions = [
+    { label: `${QuestTab.ALL} ${t('All')}`, value: QuestTab.ALL },
+    {
+      label: `${QuestTab.IN_PROGRESS} ${t('In Progress', { number: '' })}`,
+      value: QuestTab.IN_PROGRESS,
+    },
+    { label: `${QuestTab.DAILY} ${t('Daily')}`, value: QuestTab.DAILY },
+    { label: `${QuestTab.WEEKLY} ${t('Weekly')}`, value: QuestTab.WEEKLY },
+    { label: `${QuestTab.MONTHLY} ${t('Monthly')}`, value: QuestTab.MONTHLY },
+    { label: `${QuestTab.ONCE} ${t('One-time')}`, value: QuestTab.ONCE },
+    { label: `${QuestTab.OTHERS} ${t('Others')}`, value: QuestTab.OTHERS },
+  ]
+
   return IN_POI ? (
-    <Button
-      icon={IconNames.EXPORT}
-      text={t('Export quest analysis')}
-      onClick={handleExportData}
-    />
+    <Group>
+      <Button
+        icon={IconNames.EXPORT}
+        text={t('Export quest analysis')}
+        onClick={handleExportData}
+      />
+      <Button
+        icon={IconNames.EXPORT}
+        text={t('Export raw quest snapshot')}
+        onClick={handleExportRawQuestSnapshot}
+      />
+      <Button
+        icon={IconNames.EXPORT}
+        text={t('Export raw snapshot to archive')}
+        onClick={handleExportRawQuestSnapshotToArchive}
+      />
+      <Checkbox
+        checked={store.autoExportRawQuestSnapshot}
+        label={t('Auto export raw quest snapshot')}
+        onChange={(event) =>
+          updateStore({
+            autoExportRawQuestSnapshot: event.currentTarget.checked,
+          })
+        }
+      />
+      <Checkbox
+        checked={store.autoExportLiveQuestProgress}
+        label={t('Auto export live quest progress')}
+        onChange={(event) =>
+          updateStore({
+            autoExportLiveQuestProgress: event.currentTarget.checked,
+          })
+        }
+      />
+      <Checkbox
+        checked={store.bridgeLiveQuestProgressToTaskPanel}
+        label={t('Experimental task panel live progress bridge')}
+        onChange={(event) => {
+          const checked = event.currentTarget.checked
+          updateStore({
+            bridgeLiveQuestProgressToTaskPanel: checked,
+          })
+          setLiveQuestProgressTaskPanelBridgeEnabled(checked).catch((error) => {
+            console.warn(
+              'Failed to refresh live quest progress task panel bridge',
+              error,
+            )
+          })
+        }}
+      />
+      <HTMLSelect
+        value={emptyTabSelection}
+        options={emptyTabOptions}
+        onChange={(event) =>
+          setEmptyTabSelection(event.currentTarget.value as QuestTab)
+        }
+      />
+      <Button
+        icon={IconNames.TICK}
+        text={t('Mark selected quest tab as observed empty')}
+        onClick={handleMarkEmptyTabObserved}
+      />
+    </Group>
   ) : (
     <>
       <TextArea
@@ -247,15 +428,15 @@ const InventoryImportArea = () => {
         <Text>
           {importedInventory.shipCsv
             ? t('Imported Ship CSV Summary', {
-              fileName: importedInventory.shipCsv.fileName,
-              count: importedInventory.shipCsv.count,
-              format: t(
-                importedInventory.shipCsv.format === 'external_csv'
-                  ? 'External CSV Format'
-                  : 'Legacy CSV Format',
-              ),
-              importedAt: importedInventory.shipCsv.importedAt,
-            })
+                fileName: importedInventory.shipCsv.fileName,
+                count: importedInventory.shipCsv.count,
+                format: t(
+                  importedInventory.shipCsv.format === 'external_csv'
+                    ? 'External CSV Format'
+                    : 'Legacy CSV Format',
+                ),
+                importedAt: importedInventory.shipCsv.importedAt,
+              })
             : t('Ship CSV not imported')}
         </Text>
         {importedInventory.shipCsv?.format === 'legacy_localized_csv' ? (
